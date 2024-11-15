@@ -1,1 +1,0 @@
-attack_player_img = None  # Inicializa a variável, a imagem será carregada dinamicamente
