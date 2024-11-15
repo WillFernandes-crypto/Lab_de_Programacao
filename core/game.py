@@ -1,4 +1,4 @@
-# core/game.py
+'''# core/game.py
 import pygame
 from entities.player import Player
 from entities.player import Sword
@@ -57,3 +57,4 @@ class Game:
                 self.player.update_action(0)  # 0: idle
             
             self.player.move(moving_left, moving_right, jump)
+'''

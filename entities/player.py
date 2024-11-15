@@ -1,10 +1,35 @@
 # entities/player.py
 import pygame
 import os
-
+from utils.settings import *
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, scale, speed, gravity):
-        pygame.sprite.Sprite.__init__(self)
+    def __init__(self, pos, groups):
+        super().__init__(groups)
+        self.image = pygame.Surface((23,60))
+        self.image.fill('black')
+        self.rect = self.image.get_frect(topleft = pos)
+
+        # Movimentação
+        self.direction = vector()
+        self.speed = 200
+
+    def input(self):
+        keys = pygame.key.get_pressed()
+        input_vector = vector(0,0)
+        if keys[pygame.K_d]:
+            input_vector.x += 1
+        if keys[pygame.K_a]:
+            input_vector.x -= 1
+        self.direction = input_vector.normalize() if input_vector else input_vector
+
+    def move(self, datetime):
+        self.rect.topleft += self.direction * self.speed * datetime
+
+
+    def update(self, datetime):
+        self.input()
+        self.move(datetime)
+'''
         self.alive = True
         self.speed = speed
         self.gravity = gravity
@@ -93,3 +118,4 @@ class Sword(pygame.sprite.Sprite):
         self.rect.x += self.speed * self.direction
         if abs(self.rect.x) > 800:
             self.kill()
+'''

@@ -1,18 +1,39 @@
 # main.py
 import pygame
-from core.game import Game
+from core.game import *
 from core.input import get_user_input
+from utils.settings import *
+from levels.level import *
+from pytmx.util_pygame import load_pygame
+from os.path import join
 
-# Inicializa o Pygame
-pygame.init()
+class Main:
+    def __init__(self):
+        # Inicializa o Pygame
+        pygame.init()
+        self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
+        pygame.display.set_caption("The Emptiness Machine")
+        self.clock = pygame.time.Clock()
+        self.tmx_maps = {0: load_pygame(join('assets', 'data', 'levels', 'omni.tmx'))}
+        self.current_stage = Level(self.tmx_maps[0])
 
-# Configuração da tela
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = int(SCREEN_WIDTH * 0.8)
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("The Emptiness Machine")
+    def run(self):
+        # Inicia o loop do jogo
+        while True:
+            datetime = self.clock.tick(60) / 1000
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-clock = pygame.time.Clock()
+            self.current_stage.run(datetime)
+            pygame.display.update()
+
+if __name__ == '__main__':
+    game = Main()
+    game.run()
+
+'''clock = pygame.time.Clock()
 FPS = 60
 
 GRAVITY = 0.75
@@ -44,3 +65,4 @@ while run:
     pygame.display.update()
 
 pygame.quit()
+'''
