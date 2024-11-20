@@ -5,9 +5,15 @@ from utils.timer import *
 from os.path import join
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, collision_sprites, semi_collision_sprites):
+    def __init__(self, pos, groups, collision_sprites, semi_collision_sprites, frames):
+        # Setup geral
         super().__init__(groups)
-        self.image = pygame.image.load(join('assets', 'images', 'player', 'idle', '0.png'))
+        self.z = Z_LAYERS['main']
+        
+        # Imagem
+        self.frames, self.frame_index = frames, 0
+        self.state, self.facing_right = 'idle', True
+        self.image = self.frames[self.state][self.frame_index]
 
         # Rects
         self.rect = self.image.get_rect(topleft=pos)
@@ -31,7 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.timers = {
             'wall jump': Timer(400),
             'wall slide block': Timer(250),
-            'platform skip': Timer(300)
+            'platform skip': Timer(100)
         }
 
     def input(self):
@@ -40,8 +46,10 @@ class Player(pygame.sprite.Sprite):
         if not self.timers['wall jump'].active:
             if keys[pygame.K_d]:
                 input_vector.x += 1
+                self.facing_right = True
             if keys[pygame.K_a]:
                 input_vector.x -= 1
+                self.facing_right = False
             self.direction.x = input_vector.normalize().x if input_vector.length() > 0 else 0
             if keys[pygame.K_s]:
                 self.timers['platform skip'].activate()
@@ -133,10 +141,28 @@ class Player(pygame.sprite.Sprite):
         for timer in self.timers.values():
             timer.update()
 
+    def animate(self, delta_time):
+            self.frame_index += ANIMATION_SPEED * delta_time
+            self.image = self.frames[self.state][int(self.frame_index % len(self.frames[self.state]))]
+            self.image = self.image if self.facing_right else pygame.transform.flip(self.image, True, False)
+
+    def get_state(self):
+            if self.on_surface['floor']:
+                self.state = 'idle' if self.direction.x == 0 else 'walk'
+            else:
+                if any((self.on_surface['left'], self.on_surface['right'])):
+                    self.state = 'jump'
+                else:
+                    self.state = 'jump' if self.direction.y < 0 else 'fall'
+
     def update(self, delta_time):
         self.old_rect = self.hitbox_rect.copy()
         self.update_timers()
+
         self.platform_move(delta_time)  # Mover o player com a plataforma antes de mover o player
         self.input()
         self.move(delta_time)
         self.check_contact()
+
+        self.get_state()
+        self.animate(delta_time)
