@@ -26,6 +26,7 @@ class Player(pygame.sprite.Sprite):
         self.gravity = 1300
         self.jump = False
         self.jump_height = 800
+        self.attacking = False
 
         # Colisões
         self.collision_sprites = collision_sprites
@@ -35,14 +36,18 @@ class Player(pygame.sprite.Sprite):
 
         # Timer
         self.timers = {
-            'wall jump': Timer(400),
-            'wall slide block': Timer(250),
-            'platform skip': Timer(100)
-        }
+			'wall jump': Timer(400),
+			'wall slide block': Timer(250),
+			'platform skip': Timer(100),
+			'attack block': Timer(500),
+			'hit': Timer(400)
+		}
 
     def input(self):
         keys = pygame.key.get_pressed()
+        mouse_buttons = pygame.mouse.get_pressed()  # Pega o estado dos botões do mouse
         input_vector = pygame.math.Vector2(0, 0)
+        
         if not self.timers['wall jump'].active:
             if keys[pygame.K_d]:
                 input_vector.x += 1
@@ -53,9 +58,19 @@ class Player(pygame.sprite.Sprite):
             self.direction.x = input_vector.normalize().x if input_vector.length() > 0 else 0
             if keys[pygame.K_s]:
                 self.timers['platform skip'].activate()
+            
+            # Verifica se o botão esquerdo do mouse está pressionado
+            if mouse_buttons[0]:  # 0 = botão esquerdo
+                self.attack()
         
         if keys[pygame.K_w]:
             self.jump = True
+
+    def attack(self):
+        if not self.attacking and not self.timers['attack block'].active:
+            self.attacking = True
+            self.frame_index = 0
+            self.timers['attack block'].activate()
 
     def move(self, delta_time):
         # Movimentação horizontal
@@ -142,18 +157,34 @@ class Player(pygame.sprite.Sprite):
             timer.update()
 
     def animate(self, delta_time):
-            self.frame_index += ANIMATION_SPEED * delta_time
-            self.image = self.frames[self.state][int(self.frame_index % len(self.frames[self.state]))]
-            self.image = self.image if self.facing_right else pygame.transform.flip(self.image, True, False)
+        self.frame_index += ANIMATION_SPEED * delta_time
+        
+        # Verifica se a animação de ataque terminou
+        if self.state in ['attack', 'air_attack']:
+            if self.frame_index >= len(self.frames[self.state]):
+                self.attacking = False  # Reseta o estado de ataque
+                self.frame_index = 0
+                self.state = 'idle'
+                return
+        
+        # Atualiza o frame atual
+        self.image = self.frames[self.state][int(self.frame_index % len(self.frames[self.state]))]
+        self.image = self.image if self.facing_right else pygame.transform.flip(self.image, True, False)
 
     def get_state(self):
             if self.on_surface['floor']:
-                self.state = 'idle' if self.direction.x == 0 else 'walk'
-            else:
-                if any((self.on_surface['left'], self.on_surface['right'])):
-                    self.state = 'jump'
+                if self.attacking:
+                    self.state = 'attack'
                 else:
-                    self.state = 'jump' if self.direction.y < 0 else 'fall'
+                    self.state = 'idle' if self.direction.x == 0 else 'walk'
+            else:
+                if self.attacking:
+                    self.state = 'air_attack'
+                else:
+                    if any((self.on_surface['left'], self.on_surface['right'])):
+                        self.state = 'fall'
+                    else:
+                        self.state = 'jump' if self.direction.y < 0 else 'fall'
 
     def update(self, delta_time):
         self.old_rect = self.hitbox_rect.copy()
