@@ -66,6 +66,8 @@ class AutomataPuzzle:
         # Criar estados iniciais
         self.create_initial_states()
         
+        self.success_message = ""
+        
     def create_initial_states(self):
         # Estado inicial (q0)
         self.q0 = State(
@@ -88,66 +90,76 @@ class AutomataPuzzle:
         )
     
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Botão esquerdo
-                mouse_pos = pygame.mouse.get_pos()
-                for state in self.states:
-                    if state.rect.collidepoint(mouse_pos):
-                        if not self.transition_start:
-                            self.transition_start = state
-                            self.show_message("Selecione o símbolo (a/b)")
-                        elif self.current_symbol:  # Só cria transição se tiver um símbolo
-                            # Cria a transição com o símbolo selecionado
-                            if self.create_transition(self.transition_start, state, self.current_symbol):
-                                self.show_message(f"Transição '{self.current_symbol}' criada!")
-                            # Reseta o estado
-                            self.transition_start = None
-                            self.current_symbol = None
-                        break
-                        
-            elif event.button == 3:  # Botão direito
-                self.transition_start = None
-                self.current_symbol = None
-                self.show_message("Seleção cancelada")
-                
-        elif event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self.escape_pressed = True
-            elif event.key == pygame.K_RETURN:
+            elif event.key == pygame.K_RETURN and not self.completed:
                 self.check_solution()
-            elif self.transition_start and event.key in [pygame.K_a, pygame.K_b]:
+            elif self.transition_start and not self.completed and event.key in [pygame.K_a, pygame.K_b]:
                 self.current_symbol = pygame.key.name(event.key)
                 self.show_message(f"Símbolo '{self.current_symbol}' selecionado. Agora selecione o estado de destino")
+                
+        if not self.completed:  # Só permite modificações se não estiver completo
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Botão esquerdo
+                    mouse_pos = pygame.mouse.get_pos()
+                    for state in self.states:
+                        if state.rect.collidepoint(mouse_pos):
+                            if not self.transition_start:
+                                self.transition_start = state
+                                self.show_message("Selecione o símbolo (a/b)")
+                            elif self.current_symbol:
+                                if self.create_transition(self.transition_start, state, self.current_symbol):
+                                    self.show_message(f"Transição '{self.current_symbol}' criada!")
+                                self.transition_start = None
+                                self.current_symbol = None
+                            break
+                            
+                elif event.button == 3:  # Botão direito
+                    self.transition_start = None
+                    self.current_symbol = None
+                    self.show_message("Seleção cancelada")
     
     def create_transition(self, from_state, to_state, symbol):
-        # Verifica se já existe uma transição com esse símbolo
-        if symbol in from_state.transitions:
-            self.show_message("Já existe uma transição com esse símbolo!")
-            return False
-            
-        self.transitions.append(Transition(from_state, to_state, symbol))
-        from_state.transitions[symbol] = to_state
-        return True
+        # Verifica se já existe uma transição entre estes estados
+        existing_transition = None
+        for t in self.transitions:
+            if t.from_state == from_state and t.to_state == to_state:
+                existing_transition = t
+                break
+        
+        # Se já existe transição entre estes estados
+        if existing_transition:
+            # Verifica se o símbolo já existe
+            if symbol in existing_transition.symbol:
+                self.show_message(f"Símbolo '{symbol}' já existe nesta transição!")
+                return False
+            # Adiciona o novo símbolo à transição existente
+            existing_transition.symbol += f",{symbol}"
+            from_state.transitions[symbol] = to_state
+            return True
+        else:
+            # Cria nova transição
+            self.transitions.append(Transition(from_state, to_state, symbol))
+            from_state.transitions[symbol] = to_state
+            return True
         
     def show_message(self, text):
         self.message = text
         self.message_timer = 60  # Frames que a mensagem ficará visível
-        
+    
     def check_solution(self):
-        """Verifica se o autômato aceita a linguagem L = {ab}"""
-        # Verifica se existe um caminho q0 -a-> q1 -b-> q2
+        """Verifica se o autômato aceita a linguagem correta"""
         try:
-            # Deve começar do estado inicial
-            if 'a' in self.q0.transitions:
-                state_after_a = self.q0.transitions['a']
-                if 'b' in state_after_a.transitions:
-                    final_state = state_after_a.transitions['b']
-                    if final_state.is_final:
-                        self.completed = True
-                        self.show_message("Puzzle completado! Pressione ESC para sair")
-                        return
-            
-            self.show_message("Solução incorreta. Tente novamente!")
+            if self.verify_solution():
+                self.completed = True
+                self.success_message = "Autômato construído com sucesso! Pressione ESC para sair"
+                self.show_message(self.success_message)
+                # Notifica o nível que o puzzle foi completado
+                if hasattr(self, 'level'):
+                    self.level.puzzle_completed = True
+            else:
+                self.show_message("Solução incorreta. Tente novamente!")
         except AttributeError:
             self.show_message("Construa o autômato completo!")
     
@@ -178,33 +190,65 @@ class AutomataPuzzle:
             start_pos = transition.from_state.rect.center
             end_pos = transition.to_state.rect.center
             
-            # Calcula o ponto médio para o texto e a seta
-            mid_x = (start_pos[0] + end_pos[0]) // 2
-            mid_y = (start_pos[1] + end_pos[1]) // 2
-            mid_pos = (mid_x, mid_y)
-            
-            # Desenha a linha
-            pygame.draw.line(self.display_surface, 'white', start_pos, end_pos, 2)
-            
-            # Desenha a ponta da seta
-            angle = math.atan2(end_pos[1] - start_pos[1], end_pos[0] - start_pos[0])
-            arrow_size = 20
-            arrow_angle = math.pi / 6  # 30 graus
-            
-            # Calcula os pontos da ponta da seta
-            arrow_p1 = (end_pos[0] - arrow_size * math.cos(angle - arrow_angle),
-                       end_pos[1] - arrow_size * math.sin(angle - arrow_angle))
-            arrow_p2 = (end_pos[0] - arrow_size * math.cos(angle + arrow_angle),
-                       end_pos[1] - arrow_size * math.sin(angle + arrow_angle))
-            
-            # Desenha a ponta da seta
-            pygame.draw.polygon(self.display_surface, 'white', 
-                              [end_pos, arrow_p1, arrow_p2])
-            
-            # Desenha o símbolo da transição
-            text_surf = self.font.render(transition.symbol, True, 'yellow')
-            text_rect = text_surf.get_rect(center=mid_pos)
-            self.display_surface.blit(text_surf, text_rect)
+            # Verifica se é uma transição para o mesmo estado
+            if transition.from_state == transition.to_state:
+                # Ajustes para o arco ficar acima do estado
+                radius = 30
+                center_y = start_pos[1] - radius  # Move o centro do arco para cima
+                
+                # Define o retângulo para o arco
+                rect = pygame.Rect(
+                    start_pos[0] - radius,
+                    center_y - radius,  # Posiciona o retângulo acima do estado
+                    radius * 2,
+                    radius * 2
+                )
+                
+                # Desenha o semicírculo
+                pygame.draw.arc(self.display_surface, 'white', rect, 
+                              0, math.pi, 2)
+                
+                # Calcula o ponto para a seta (no lado esquerdo do arco)
+                arrow_pos = (start_pos[0] - radius, center_y)
+                
+                # Desenha a ponta da seta
+                arrow_size = 10
+                arrow_p1 = (arrow_pos[0] - arrow_size, arrow_pos[1] - arrow_size)
+                arrow_p2 = (arrow_pos[0] - arrow_size, arrow_pos[1] + arrow_size)
+                
+                pygame.draw.polygon(self.display_surface, 'white', 
+                                  [arrow_pos, arrow_p1, arrow_p2])
+                
+                # Desenha o(s) símbolo(s)
+                text_surf = self.font.render(transition.symbol, True, 'yellow')
+                text_rect = text_surf.get_rect(center=(start_pos[0], center_y - radius))
+                self.display_surface.blit(text_surf, text_rect)
+            else:
+                # Transição normal entre estados diferentes
+                mid_x = (start_pos[0] + end_pos[0]) // 2
+                mid_y = (start_pos[1] + end_pos[1]) // 2
+                mid_pos = (mid_x, mid_y)
+                
+                # Desenha a linha
+                pygame.draw.line(self.display_surface, 'white', start_pos, end_pos, 2)
+                
+                # Desenha a ponta da seta
+                angle = math.atan2(end_pos[1] - start_pos[1], end_pos[0] - start_pos[0])
+                arrow_size = 20
+                arrow_angle = math.pi / 6
+                
+                arrow_p1 = (end_pos[0] - arrow_size * math.cos(angle - arrow_angle),
+                           end_pos[1] - arrow_size * math.sin(angle - arrow_angle))
+                arrow_p2 = (end_pos[0] - arrow_size * math.cos(angle + arrow_angle),
+                           end_pos[1] - arrow_size * math.sin(angle + arrow_angle))
+                
+                pygame.draw.polygon(self.display_surface, 'white', 
+                                  [end_pos, arrow_p1, arrow_p2])
+                
+                # Desenha o símbolo da transição
+                text_surf = self.font.render(transition.symbol, True, 'yellow')
+                text_rect = text_surf.get_rect(center=mid_pos)
+                self.display_surface.blit(text_surf, text_rect)
     
     def run(self, delta_time):
         if self.escape_pressed:
@@ -212,8 +256,8 @@ class AutomataPuzzle:
             
         self.display_surface.fill('black')
         
-        # Desenha linha temporária durante a criação de transição
-        if self.transition_start and self.current_symbol:
+        # Só permite desenhar linha temporária se não estiver completo
+        if not self.completed and self.transition_start and self.current_symbol:
             mouse_pos = pygame.mouse.get_pos()
             pygame.draw.line(self.display_surface, 'yellow', 
                            self.transition_start.rect.center, mouse_pos, 2)
@@ -221,4 +265,14 @@ class AutomataPuzzle:
         self.draw_transitions()
         self.all_sprites.update(delta_time)
         self.all_sprites.draw(self.display_surface)
-        self.draw_instructions()
+        
+        # Mostra instruções apenas se não estiver completo
+        if not self.completed:
+            self.draw_instructions()
+        
+        # Se estiver completo, mostra apenas a mensagem de sucesso
+        if self.completed:
+            # Desenha um texto centralizado maior
+            text_surf = self.font.render(self.success_message, True, 'yellow')
+            text_rect = text_surf.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT - 100))
+            self.display_surface.blit(text_surf, text_rect)

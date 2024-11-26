@@ -47,6 +47,7 @@ class Level:
         self.automata_puzzle = None
         self.switch_stage_func = None  # Adiciona referência para a função de troca de estágio
         self.game = None  # Referência para o objeto Game
+        self.puzzle_completed = False  # Novo atributo para controlar se o puzzle foi completado
 
     def setup(self, tmx_map, level_frames):
         self.player = None  # Inicializa como None
@@ -242,7 +243,7 @@ class Level:
             
     def check_flag_interaction(self):
         if (self.player.hitbox_rect.colliderect(self.level_finish_rect) and 
-            self.player.interacting and not self.puzzle_active):
+            self.player.interacting and not self.puzzle_active and not self.puzzle_completed):
             self.puzzle_active = True
             self.automata_puzzle = AutomataPuzzle()
             if self.game:
