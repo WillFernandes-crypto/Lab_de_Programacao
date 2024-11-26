@@ -3,7 +3,7 @@ from utils.sprites import *
 from entities.player import *
 from entities.enemies import *
 from core.groups import *
-from puzzles.puzzle import *
+from puzzles.automata_puzzle import *
 from random import uniform
 
 class Level:
