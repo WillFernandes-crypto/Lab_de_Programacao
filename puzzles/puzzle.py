@@ -276,3 +276,27 @@ class AutomataPuzzle:
             text_surf = self.font.render(self.success_message, True, 'yellow')
             text_rect = text_surf.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT - 100))
             self.display_surface.blit(text_surf, text_rect)
+    
+    def verify_solution(self):
+        """Verifica se o autômato aceita exatamente a palavra 'ab'"""
+        # Verifica se temos todos os estados necessários
+        if not (hasattr(self, 'q0') and hasattr(self, 'q1') and hasattr(self, 'q2')):
+            return False
+        
+        try:
+            # Verifica se existe a transição 'a' do estado inicial para o intermediário
+            if 'a' not in self.q0.transitions or self.q0.transitions['a'] != self.q1:
+                return False
+            
+            # Verifica se existe a transição 'b' do estado intermediário para o final
+            if 'b' not in self.q1.transitions or self.q1.transitions['b'] != self.q2:
+                return False
+            
+            # Verifica se o estado final é realmente final
+            if not self.q2.is_final:
+                return False
+            
+            return True
+        
+        except AttributeError:
+            return False
