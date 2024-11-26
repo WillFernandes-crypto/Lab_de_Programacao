@@ -268,10 +268,12 @@ class Level:
         if self.puzzle_active and self.automata_puzzle:
             self.automata_puzzle.run(delta_time)
             
-            if self.automata_puzzle.completed or self.automata_puzzle.escape_pressed:
+            # Só fecha o puzzle quando o ESC for pressionado
+            if self.automata_puzzle.escape_pressed:
                 self.puzzle_active = False
                 if self.game:
                     self.game.paused = False
+                # Se o puzzle foi completado, avança para o próximo nível
                 if self.automata_puzzle.completed:
                     self.switch_stage('overworld', self.level_unlock)
     

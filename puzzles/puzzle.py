@@ -155,9 +155,6 @@ class AutomataPuzzle:
                 self.completed = True
                 self.success_message = "Autômato construído com sucesso! Pressione ESC para sair"
                 self.show_message(self.success_message)
-                # Notifica o nível que o puzzle foi completado
-                if hasattr(self, 'level'):
-                    self.level.puzzle_completed = True
             else:
                 self.show_message("Solução incorreta. Tente novamente!")
         except AttributeError:
