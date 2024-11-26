@@ -242,12 +242,15 @@ class Level:
             self.automata_puzzle.handle_event(event)
             
     def check_flag_interaction(self):
+        """Verifica interação com a bandeira apenas se o puzzle ainda não foi completado"""
         if (self.player.hitbox_rect.colliderect(self.level_finish_rect) and 
-            self.player.interacting and not self.puzzle_active and not self.puzzle_completed):
+            self.player.interacting and 
+            not self.puzzle_active and 
+            not self.puzzle_completed):  # Verifica se o puzzle já foi completado
             self.puzzle_active = True
             self.automata_puzzle = AutomataPuzzle()
             if self.game:
-                self.game.paused = True  # Pausa o jogo quando o puzzle abre
+                self.game.paused = True
                 
     def setup_stage_func(self, switch_stage_func):
         """Configura a função de troca de estágio"""
@@ -273,8 +276,9 @@ class Level:
                 self.puzzle_active = False
                 if self.game:
                     self.game.paused = False
-                # Se o puzzle foi completado, avança para o próximo nível
+                # Se o puzzle foi completado, marca como concluído e avança para o próximo nível
                 if self.automata_puzzle.completed:
+                    self.puzzle_completed = True  # Marca o puzzle como concluído
                     self.switch_stage('overworld', self.level_unlock)
     
     def run(self, delta_time):
