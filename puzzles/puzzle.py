@@ -2,6 +2,7 @@ import pygame
 from utils.settings import *
 from utils.sprites import *
 import math
+from random import choice
 
 class State(pygame.sprite.Sprite):
     def __init__(self, pos, groups, is_initial=False, is_final=False):
@@ -57,37 +58,96 @@ class AutomataPuzzle:
         self.completed = False
         self.escape_pressed = False
         self.transition_start = None
-        self.current_symbol = None  # Para armazenar o símbolo atual
+        self.current_symbol = None
         
         # Mensagens de feedback
         self.message = ""
         self.message_timer = 0
         
+        # Seleciona aleatoriamente um dos três puzzles
+        self.puzzle_type = choice(['ab', 'aab', 'aba'])
+        
         # Criar estados iniciais
         self.create_initial_states()
         
         self.success_message = ""
-        
+    
     def create_initial_states(self):
-        # Estado inicial (q0)
-        self.q0 = State(
-            pos=(200, SCREEN_HEIGHT//2),
-            groups=[self.all_sprites, self.states],
-            is_initial=True
-        )
-        
-        # Estado intermediário (q1)
-        self.q1 = State(
-            pos=(400, SCREEN_HEIGHT//2),
-            groups=[self.all_sprites, self.states]
-        )
-        
-        # Estado final (q2)
-        self.q2 = State(
-            pos=(600, SCREEN_HEIGHT//2),
-            groups=[self.all_sprites, self.states],
-            is_final=True
-        )
+        # Configuração comum para todos os puzzles
+        if self.puzzle_type == 'ab':
+            # Estado inicial (q0)
+            self.q0 = State(
+                pos=(200, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states],
+                is_initial=True
+            )
+            
+            # Estado intermediário (q1)
+            self.q1 = State(
+                pos=(400, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states]
+            )
+            
+            # Estado final (q2)
+            self.q2 = State(
+                pos=(600, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states],
+                is_final=True
+            )
+            
+        elif self.puzzle_type == 'aab':
+            # Estado inicial (q0)
+            self.q0 = State(
+                pos=(200, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states],
+                is_initial=True
+            )
+            
+            # Estado após primeiro 'a' (q1)
+            self.q1 = State(
+                pos=(400, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states]
+            )
+            
+            # Estado após segundo 'a' (q2)
+            self.q2 = State(
+                pos=(600, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states]
+            )
+            
+            # Estado final após 'b' (q3)
+            self.q3 = State(
+                pos=(800, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states],
+                is_final=True
+            )
+            
+        elif self.puzzle_type == 'aba':
+            # Estado inicial (q0)
+            self.q0 = State(
+                pos=(200, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states],
+                is_initial=True
+            )
+            
+            # Estado após 'a' (q1)
+            self.q1 = State(
+                pos=(400, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states]
+            )
+            
+            # Estado após 'b' (q2)
+            self.q2 = State(
+                pos=(600, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states]
+            )
+            
+            # Estado final após segundo 'a' (q3)
+            self.q3 = State(
+                pos=(800, SCREEN_HEIGHT//2),
+                groups=[self.all_sprites, self.states],
+                is_final=True
+            )
     
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -161,21 +221,41 @@ class AutomataPuzzle:
             self.show_message("Construa o autômato completo!")
     
     def draw_instructions(self):
-        instructions = [
-            "Construa um autômato que aceite a palavra 'ab'",
-            "Clique esquerdo: selecionar estado",
-            "Teclas a/b: definir símbolo da transição",
-            "Clique direito: cancelar seleção",
-            "ENTER: verificar solução",
-            "ESC: sair do puzzle"
-        ]
+        instructions = []
+        
+        if self.puzzle_type == 'ab':
+            instructions = [
+                "Construa um autômato que aceite a palavra 'ab'",
+                "Clique esquerdo: selecionar estado",
+                "Teclas a/b: definir símbolo da transição",
+                "Clique direito: cancelar seleção",
+                "ENTER: verificar solução",
+                "ESC: sair do puzzle"
+            ]
+        elif self.puzzle_type == 'aab':
+            instructions = [
+                "Construa um autômato que aceite a palavra 'aab'",
+                "Clique esquerdo: selecionar estado",
+                "Teclas a/b: definir símbolo da transição",
+                "Clique direito: cancelar seleção",
+                "ENTER: verificar solução",
+                "ESC: sair do puzzle"
+            ]
+        elif self.puzzle_type == 'aba':
+            instructions = [
+                "Construa um autômato que aceite a palavra 'aba'",
+                "Clique esquerdo: selecionar estado",
+                "Teclas a/b: definir símbolo da transição",
+                "Clique direito: cancelar seleção",
+                "ENTER: verificar solução",
+                "ESC: sair do puzzle"
+            ]
         
         for i, text in enumerate(instructions):
             text_surf = self.font.render(text, True, 'white')
             text_rect = text_surf.get_rect(topleft=(50, 50 + i * 40))
             self.display_surface.blit(text_surf, text_rect)
             
-        # Desenha mensagem de feedback
         if self.message and self.message_timer > 0:
             text_surf = self.font.render(self.message, True, 'yellow')
             text_rect = text_surf.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT - 100))
@@ -275,25 +355,35 @@ class AutomataPuzzle:
             self.display_surface.blit(text_surf, text_rect)
     
     def verify_solution(self):
-        """Verifica se o autômato aceita exatamente a palavra 'ab'"""
-        # Verifica se temos todos os estados necessários
-        if not (hasattr(self, 'q0') and hasattr(self, 'q1') and hasattr(self, 'q2')):
-            return False
-        
+        """Verifica se o autômato aceita a linguagem correta"""
         try:
-            # Verifica se existe a transição 'a' do estado inicial para o intermediário
-            if 'a' not in self.q0.transitions or self.q0.transitions['a'] != self.q1:
-                return False
+            if self.puzzle_type == 'ab':
+                # Verifica se aceita 'ab'
+                return (
+                    'a' in self.q0.transitions and self.q0.transitions['a'] == self.q1 and
+                    'b' in self.q1.transitions and self.q1.transitions['b'] == self.q2 and
+                    self.q2.is_final
+                )
             
-            # Verifica se existe a transição 'b' do estado intermediário para o final
-            if 'b' not in self.q1.transitions or self.q1.transitions['b'] != self.q2:
-                return False
+            elif self.puzzle_type == 'aab':
+                # Verifica se aceita 'aab'
+                return (
+                    'a' in self.q0.transitions and self.q0.transitions['a'] == self.q1 and
+                    'a' in self.q1.transitions and self.q1.transitions['a'] == self.q2 and
+                    'b' in self.q2.transitions and self.q2.transitions['b'] == self.q3 and
+                    self.q3.is_final
+                )
             
-            # Verifica se o estado final é realmente final
-            if not self.q2.is_final:
-                return False
+            elif self.puzzle_type == 'aba':
+                # Verifica se aceita 'aba'
+                return (
+                    'a' in self.q0.transitions and self.q0.transitions['a'] == self.q1 and
+                    'b' in self.q1.transitions and self.q1.transitions['b'] == self.q2 and
+                    'a' in self.q2.transitions and self.q2.transitions['a'] == self.q3 and
+                    self.q3.is_final
+                )
             
-            return True
-        
+            return False
+            
         except AttributeError:
             return False
