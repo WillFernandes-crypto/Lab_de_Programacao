@@ -100,5 +100,5 @@ class Game:
             self.check_game_over()
             self.current_stage.run(delta_time)
             self.ui.update(delta_time)
-            # debug(self.data.health)
+            self.ui.draw()
             pygame.display.update()
