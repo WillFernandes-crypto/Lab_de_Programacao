@@ -2,7 +2,10 @@
 import pygame
 from utils.settings import *
 from utils.support import *
+from utils.debug import debug
+from ui.ui import UI
 from levels.level import Level
+from core.data import Data
 from pytmx.util_pygame import load_pygame
 from os.path import join
 import sys  # Para permitir encerramento correto do jogo
@@ -14,13 +17,17 @@ class Game:
         pygame.display.set_caption("The Empytiness Machine")
         self.clock = pygame.time.Clock()
         self.import_assets()
-        
+
+        self.ui = UI(self.font, self.ui_frames)
+        self.data = Data(self.ui)
+
+
         # Carrega os mapas
         self.tmx_maps = {
             0: load_pygame(join('assets', 'data', 'levels', 'omni.tmx'))
         }
         # Configura o nível inicial
-        self.current_stage = Level(self.tmx_maps[0], self.level_frames)
+        self.current_stage = Level(self.tmx_maps[0], self.level_frames, self.data)
 
 
     def import_assets(self):
@@ -53,6 +60,33 @@ class Game:
 			'cloud_large': import_image('assets', 'graphics','level', 'clouds', 'large_cloud')
         }
 
+        self.font = pygame.font.Font(join('assets', 'graphics', 'ui', 'runescape_uf.ttf'), 40)
+        self.ui_frames = {
+            'heart': import_folder('assets', 'graphics', 'ui', 'heart'), 
+			'coin':import_image('assets', 'graphics', 'ui', 'coin')
+		}
+        self.overworld_frames = {
+			'palms': import_folder('assets', 'graphics', 'overworld', 'palm'),
+			'water': import_folder('assets', 'graphics', 'overworld', 'water'),
+			'path': import_folder_dict('assets', 'graphics', 'overworld', 'path'),
+			'icon': import_sub_folders('assets', 'graphics', 'overworld', 'icon'),
+		}
+
+        self.audio_files = {
+			'coin': pygame.mixer.Sound(join('assets', 'audio', 'coin.wav')),
+			'attack': pygame.mixer.Sound(join('assets', 'audio', 'attack.wav')),
+			'jump': pygame.mixer.Sound(join('assets', 'audio', 'jump.wav')), 
+			'damage': pygame.mixer.Sound(join('assets', 'audio', 'damage.wav')),
+			'pearl': pygame.mixer.Sound(join('assets', 'audio', 'pearl.wav')),
+		}
+        self.bg_music = pygame.mixer.Sound(join('assets', 'audio', 'starlight_city.mp3'))
+        self.bg_music.set_volume(0.5)
+
+    def check_game_over(self):
+        if self.data.health <= 0:
+            pygame.quit()
+            sys.exit()
+
     def run(self):
         """Loop principal do jogo."""
         while True:
@@ -64,4 +98,5 @@ class Game:
 
             # Atualiza e renderiza o nível atual
             self.current_stage.run(delta_time)
+            debug(self.data.health)
             pygame.display.update()

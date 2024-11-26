@@ -6,8 +6,9 @@ from core.groups import *
 from random import uniform
 
 class Level:
-    def __init__(self, tmx_map, level_frames):
+    def __init__(self, tmx_map, level_frames, data):
         self.display_surface = pygame.display.get_surface()
+        self.data = data
         
         # Grupos
         self.all_sprites = AllSprites()
@@ -16,13 +17,17 @@ class Level:
         self.damage_sprites = pygame.sprite.Group()
         self.tooth_sprites = pygame.sprite.Group()
         self.pearl_sprites = pygame.sprite.Group()
+        self.item_sprites = pygame.sprite.Group()
 
         self.setup(tmx_map, level_frames)
 
         # Frames
         self.pearl_surf = level_frames['pearl']
+        self.particle_frames = level_frames['particle']
 
     def setup(self, tmx_map, level_frames):
+        self.player = None  # Inicializa como None
+        
         # Tiles
         for layer in ['BG', 'Terrain', 'FG', 'Platforms']:
             for x, y, surf in tmx_map.get_layer_by_name(layer).tiles():
@@ -37,13 +42,14 @@ class Level:
 
         # Objetos
         for obj in tmx_map.get_layer_by_name('Objects'):
-            if obj.name == 'player':
+            if obj.name == 'player' and self.player is None:  # Só cria se ainda não existir
                 self.player = Player(
                     pos = (obj.x, obj.y), 
                     groups = self.all_sprites, 
                     collision_sprites = self.collision_sprites, 
                     semi_collision_sprites = self.semi_collision_sprites,
-                    frames = level_frames['player'])
+                    frames = level_frames['player'],
+                    data = self.data)
             else:
                 if obj.name in ('barrel', 'crate'):
                     Sprite((obj.x, obj.y), obj.image, (self.all_sprites, self.collision_sprites))
@@ -131,18 +137,48 @@ class Level:
                     player = self.player,
                     create_pearl = self.create_pearl)
 
+        # Items
+        for obj in tmx_map.get_layer_by_name('Items'):
+            Item(obj.name, 
+                 (obj.x + TILE_SIZE / 2, obj.y + TILE_SIZE / 2), 
+                 level_frames['items'][obj.name], (self.all_sprites, self.item_sprites), 
+                 self.data)
+            
     def create_pearl(self, pos, direction):
         Pearl(pos, (self.all_sprites, self.damage_sprites, self.pearl_sprites), self.pearl_surf, direction, 150)
 
     def pearl_collision(self):
         for sprite in self.collision_sprites:
-            pygame.sprite.spritecollide(sprite, self.pearl_sprites, True)
+            sprite = pygame.sprite.spritecollide(sprite, self.pearl_sprites, True)
+            if sprite:
+                ParticleEffectSprite(sprite[0].rect.center, self.particle_frames, self.all_sprites)
 
     def hit_collision(self):
         for sprite in self.damage_sprites:
             if sprite.rect.colliderect(self.player.hitbox_rect):
+                self.player.get_damage()
                 if hasattr(sprite, 'pearl'):
                     sprite.kill()
+                    ParticleEffectSprite(sprite.rect.center, self.particle_frames, self.all_sprites)
+
+    def item_collision(self):
+        if self.item_sprites:
+            item_sprites = pygame.sprite.spritecollide(self.player, 
+                                                       self.item_sprites, 
+                                                       True)
+            if item_sprites:
+                item_sprites[0].activate()
+                ParticleEffectSprite(item_sprites[0].rect.center, 
+                                     self.particle_frames, 
+                                     self.all_sprites)
+                item_sprites[0].kill()
+
+    def attack_collision(self):
+        for target in self.pearl_sprites.sprites() + self.tooth_sprites.sprites():
+            facing_target = self.player.rect.centerx < target.rect.centerx and self.player.facing_right or \
+                            self.player.rect.centerx > target.rect.centerx and not self.player.facing_right
+            if target.rect.colliderect(self.player.rect) and self.player.attacking and facing_target:
+                target.reverse()
 
     def run(self, delta_time):
         self.display_surface.fill('gray')
@@ -150,5 +186,7 @@ class Level:
         self.all_sprites.update(delta_time)
         self.pearl_collision()
         self.hit_collision()
+        self.item_collision()
+        self.attack_collision()
 
         self.all_sprites.draw(self.player.hitbox_rect.center)
