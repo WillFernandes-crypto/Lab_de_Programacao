@@ -28,7 +28,10 @@ class Game:
         }
         # Configura o nível inicial
         self.current_stage = Level(self.tmx_maps[0], self.level_frames, self.data)
+        self.current_stage.setup_stage_func(self.switch_stage)
+        self.current_stage.setup_game(self)
 
+        self.paused = False
 
     def import_assets(self):
         self.level_frames = {
@@ -90,15 +93,38 @@ class Game:
     def run(self):
         """Loop principal do jogo."""
         while True:
-            delta_time = self.clock.tick(60) / 1000  # Controla o FPS
+            delta_time = self.clock.tick(60) / 1000
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                    
+                # Passa os eventos para o puzzle quando estiver ativo
+                if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
+                    self.current_stage.handle_puzzle_events(event)
 
             # Atualiza e renderiza o nível atual
             self.check_game_over()
-            self.current_stage.run(delta_time)
+            
+            # Renderiza o jogo base primeiro
+            if not self.paused:
+                self.current_stage.run(delta_time)
+            else:
+                # Quando pausado, ainda mostra o último frame do jogo
+                self.current_stage.draw_only()
+            
+            # Renderiza o puzzle por cima se estiver ativo
+            if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
+                self.current_stage.run_puzzle(delta_time)
+            
             self.ui.update(delta_time)
             self.ui.draw()
             pygame.display.update()
+
+    def switch_stage(self, stage_type, level_unlock):
+        """Troca o estágio atual do jogo"""
+        if stage_type == 'overworld':
+            # Aqui você implementaria a lógica para voltar ao overworld
+            # Por enquanto, vamos apenas desativar o puzzle
+            if hasattr(self.current_stage, 'puzzle_active'):
+                self.current_stage.puzzle_active = False

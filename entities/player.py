@@ -45,6 +45,8 @@ class Player(pygame.sprite.Sprite):
 			'hit': Timer(400)
 		}
 
+        self.interacting = False
+
     def input(self):
         keys = pygame.key.get_pressed()
         mouse_buttons = pygame.mouse.get_pressed()  # Pega o estado dos botões do mouse
@@ -67,6 +69,12 @@ class Player(pygame.sprite.Sprite):
         
         if keys[pygame.K_w]:
             self.jump = True
+
+        # Adiciona verificação da tecla E para interação
+        if keys[pygame.K_e]:
+            self.interacting = True
+        else:
+            self.interacting = False
 
     def attack(self):
         if not self.attacking and not self.timers['attack block'].active:

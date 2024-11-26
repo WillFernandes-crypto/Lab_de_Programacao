@@ -196,7 +196,7 @@
   <object id="6" name="crate" gid="223" x="1408" y="1536" width="50" height="36"/>
   <object id="7" name="crate" gid="223" x="1856" y="1536" width="50" height="36"/>
   <object id="11" name="palm_large" gid="225" x="192" y="1472" width="78" height="136"/>
-  <object id="15" name="player" gid="228" x="320" y="1408" width="74" height="56"/>
+  <object id="15" name="player" gid="228" x="320" y="1008" width="74" height="56"/>
   <object id="27" name="palm_bg" gid="222" x="187.333" y="1477.33" width="128" height="128"/>
   <object id="43" name="palm_bg_left" gid="233" x="105.333" y="1530" width="104" height="106"/>
   <object id="44" name="palm_bg_right" gid="234" x="749.333" y="1480" width="104" height="106"/>

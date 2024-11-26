@@ -3,6 +3,7 @@ from utils.sprites import *
 from entities.player import *
 from entities.enemies import *
 from core.groups import *
+from puzzles.puzzle import *
 from random import uniform
 
 class Level:
@@ -41,6 +42,11 @@ class Level:
         # Frames
         self.pearl_surf = level_frames['pearl']
         self.particle_frames = level_frames['particle']
+
+        self.puzzle_active = False
+        self.automata_puzzle = None
+        self.switch_stage_func = None  # Adiciona referência para a função de troca de estágio
+        self.game = None  # Referência para o objeto Game
 
     def setup(self, tmx_map, level_frames):
         self.player = None  # Inicializa como None
@@ -225,13 +231,57 @@ class Level:
         if self.player.hitbox_rect.colliderect(self.level_finish_rect):
             self.switch_stage('overworld', self.level_unlock)
 
-    def run(self, delta_time):
+    def setup_game(self, game):
+        """Configura a referência para o objeto Game"""
+        self.game = game
+        
+    def handle_puzzle_events(self, event):
+        """Gerencia eventos específicos do puzzle"""
+        if self.puzzle_active and self.automata_puzzle:
+            self.automata_puzzle.handle_event(event)
+            
+    def check_flag_interaction(self):
+        if (self.player.hitbox_rect.colliderect(self.level_finish_rect) and 
+            self.player.interacting and not self.puzzle_active):
+            self.puzzle_active = True
+            self.automata_puzzle = AutomataPuzzle()
+            if self.game:
+                self.game.paused = True  # Pausa o jogo quando o puzzle abre
+                
+    def setup_stage_func(self, switch_stage_func):
+        """Configura a função de troca de estágio"""
+        self.switch_stage_func = switch_stage_func
+        
+    def switch_stage(self, stage_type, level_unlock):
+        """Chama a função de troca de estágio"""
+        if self.switch_stage_func:
+            self.switch_stage_func(stage_type, level_unlock)
+
+    def draw_only(self):
+        """Apenas renderiza o nível sem atualizações"""
         self.display_surface.fill('gray')
-
-        self.all_sprites.update(delta_time)
-        self.pearl_collision()
-        self.hit_collision()
-        self.item_collision()
-        self.attack_collision()
-
-        self.all_sprites.draw(self.player.hitbox_rect.center, delta_time)
+        self.all_sprites.draw(self.player.hitbox_rect.center, 0)  # delta_time = 0 pois não queremos animações
+        
+    def run_puzzle(self, delta_time):
+        """Executa apenas a lógica do puzzle"""
+        if self.puzzle_active and self.automata_puzzle:
+            self.automata_puzzle.run(delta_time)
+            
+            if self.automata_puzzle.completed or self.automata_puzzle.escape_pressed:
+                self.puzzle_active = False
+                if self.game:
+                    self.game.paused = False
+                if self.automata_puzzle.completed:
+                    self.switch_stage('overworld', self.level_unlock)
+    
+    def run(self, delta_time):
+        """Método principal de execução do nível"""
+        if not self.puzzle_active:
+            self.display_surface.fill('gray')
+            self.all_sprites.update(delta_time)
+            self.pearl_collision()
+            self.hit_collision()
+            self.item_collision()
+            self.attack_collision()
+            self.check_flag_interaction()
+            self.all_sprites.draw(self.player.hitbox_rect.center, delta_time)
