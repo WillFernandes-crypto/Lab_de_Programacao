@@ -97,6 +97,8 @@ class Game:
                     sys.exit()
 
             # Atualiza e renderiza o nível atual
+            self.check_game_over()
             self.current_stage.run(delta_time)
-            debug(self.data.health)
+            self.ui.update(delta_time)
+            # debug(self.data.health)
             pygame.display.update()

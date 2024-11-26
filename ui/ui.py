@@ -40,9 +40,9 @@ class UI:
 		self.coin_amount = amount
 		self.coin_timer.activate()
 
-	def update(self, dt):
+	def update(self, delta_time):
 		self.coin_timer.update()
-		self.sprites.update(dt)
+		self.sprites.update(delta_time)
 		self.sprites.draw(self.display_surface)
 		self.display_text()
 
@@ -51,17 +51,17 @@ class Heart(AnimatedSprite):
 		super().__init__(pos, frames, groups)
 		self.active = False
 
-	def animate(self, dt):
-		self.frame_index += ANIMATION_SPEED * dt
+	def animate(self, delta_time):
+		self.frame_index += ANIMATION_SPEED * delta_time
 		if self.frame_index < len(self.frames):
 			self.image = self.frames[int(self.frame_index)]
 		else:
 			self.active = False
 			self.frame_index = 0
 
-	def update(self, dt):
+	def update(self, delta_time):
 		if self.active:
-			self.animate(dt)
+			self.animate(delta_time)
 		else:
 			if randint(0,2000) == 1:
 				self.active = True
