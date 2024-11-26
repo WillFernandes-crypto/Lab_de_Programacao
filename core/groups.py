@@ -1,5 +1,5 @@
 from utils.settings import * 
-from utils.sprites import Sprite
+from utils.sprites import Sprite, Cloud
 from random import choice, randint
 from utils.timer import Timer
 
@@ -29,10 +29,9 @@ class WorldSprites(pygame.sprite.Group):
 					self.display_surface.blit(sprite.image, sprite.rect.topleft + self.offset + vector(0,-28))
 				else:
 					self.display_surface.blit(sprite.image, sprite.rect.topleft + self.offset)
-
 		
-
 class AllSprites(pygame.sprite.Group):
+	
 	def __init__(self, width, height, clouds, horizon_line, bg_tile = None, top_limit = 0):
 		super().__init__()
 		self.display_surface = pygame.display.get_surface()
@@ -68,7 +67,7 @@ class AllSprites(pygame.sprite.Group):
 			for cloud in range(20):
 				pos = (randint(0,self.width), randint(self.borders['top'], self.horizon_line))
 				surf = choice(self.small_clouds)
-				# Cloud(pos, surf, self)
+				Cloud(pos, surf, self)
 
 	def camera_constraint(self):
 		self.offset.x = self.offset.x if self.offset.x < self.borders['left'] else self.borders['left']
@@ -98,7 +97,7 @@ class AllSprites(pygame.sprite.Group):
 	def create_cloud(self):
 		pos = (randint(self.width + 500, self.width + 600), randint(self.borders['top'], self.horizon_line))
 		surf = choice(self.small_clouds)
-		# Cloud(pos, surf, self)
+		Cloud(pos, surf, self)
 
 	def draw(self, target_pos, delta_time):
 		self.offset.x = -(target_pos[0] - SCREEN_WIDTH / 2)
@@ -113,3 +112,4 @@ class AllSprites(pygame.sprite.Group):
 		for sprite in sorted(self, key = lambda sprite: sprite.z):
 			offset_pos = sprite.rect.topleft + self.offset
 			self.display_surface.blit(sprite.image, offset_pos)
+			
