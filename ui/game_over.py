@@ -20,7 +20,7 @@ class GameOver:
         
     def carregar_imagens(self):
         # Carrega botões
-        retry_img = pygame.image.load(os.path.join('assets', 'buttons', 'retry.png')).convert_alpha()
+        retry_img = pygame.image.load(os.path.join('assets', 'buttons', 'new_game.png')).convert_alpha()
         exit_img = pygame.image.load(os.path.join('assets', 'buttons', 'exit.png')).convert_alpha()
         
         # Redimensiona botões
