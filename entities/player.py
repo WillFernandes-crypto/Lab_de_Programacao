@@ -47,6 +47,12 @@ class Player(pygame.sprite.Sprite):
 
         self.interacting = False
 
+        # Estados de dano/morte
+        self.is_dead = False
+        self.death_animation_done = False
+        self.invulnerable = False
+        self.invulnerable_duration = 1000  # 1 segundo de invulnerabilidade após dano
+
     def input(self):
         keys = pygame.key.get_pressed()
         mouse_buttons = pygame.mouse.get_pressed()  # Pega o estado dos botões do mouse
@@ -182,6 +188,14 @@ class Player(pygame.sprite.Sprite):
         self.image = self.image if self.facing_right else pygame.transform.flip(self.image, True, False)
 
     def get_state(self):
+            if self.is_dead:
+                self.state = 'death'
+                return
+            
+            if self.timers['hit'].active:
+                self.state = 'hit'
+                return
+            
             if self.on_surface['floor']:
                 if self.attacking:
                     self.state = 'attack'
@@ -197,9 +211,16 @@ class Player(pygame.sprite.Sprite):
                         self.state = 'jump' if self.direction.y < 0 else 'fall'
 
     def get_damage(self):
-        if not self.timers['hit'].active:
+        if not self.timers['hit'].active and not self.invulnerable and not self.is_dead:
             self.data.health -= 1
             self.timers['hit'].activate()
+            self.invulnerable = True
+            
+            # Verifica morte
+            if self.data.health <= 0:
+                self.is_dead = True
+                self.frame_index = 0
+                self.direction = pygame.math.Vector2()  # Para o movimento
 
     def flicker(self):
         if self.timers['hit'].active and sin(pygame.time.get_ticks() * 100) >= 0:
@@ -211,11 +232,19 @@ class Player(pygame.sprite.Sprite):
     def update(self, delta_time):
         self.old_rect = self.hitbox_rect.copy()
         self.update_timers()
-
-        self.platform_move(delta_time)  # Mover o player com a plataforma antes de mover o player
-        self.input()
-        self.move(delta_time)
-        self.check_contact()
-
+        
+        # Atualiza invulnerabilidade
+        if self.invulnerable:
+            if not self.timers['hit'].active:
+                self.invulnerable = False
+        
+        # Só processa input e movimento se não estiver morto
+        if not self.is_dead:
+            self.platform_move(delta_time)
+            self.input()
+            self.move(delta_time)
+            self.check_contact()
+        
         self.get_state()
         self.animate(delta_time)
+        self.flicker()

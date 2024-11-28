@@ -299,3 +299,7 @@ class Level:
             self.attack_collision()
             self.check_flag_interaction()
             self.all_sprites.draw(self.player.hitbox_rect.center, delta_time)
+            
+            # Verifica se o player morreu e a animação de morte terminou
+            if self.player.is_dead and self.player.death_animation_done:
+                self.switch_stage('overworld', -1)  # Reinicia o nível
