@@ -31,6 +31,11 @@ class Menu:
         self.scroll = 0
         self.clock = pygame.time.Clock()
         
+        # Carrega e configura a música
+        self.bg_music = pygame.mixer.Sound(os.path.join('assets', 'audio', 'menu', 'emptiness_machine.mp3'))
+        self.bg_music.set_volume(0.5)  # Define o volume para 50%
+        self.bg_music.play(loops=-1)  # Inicia a música em loop
+        
         # Primeiro definimos todos os métodos auxiliares
         self.carregar_imagens()
         self.criar_botoes()
@@ -70,72 +75,35 @@ class Menu:
         self.exit_button = Botao(SCREEN_WIDTH // 2 - self.exit_img.get_width() // 2, 350, self.exit_img)
         
     def redimensionar_parallax(self, nova_largura, nova_altura):
-        # Mantém a proporção original das imagens
-        proporcao_tela = nova_largura / nova_altura
-        proporcao_imagem = self.bg_images[0].get_width() / self.bg_images[0].get_height()
-        
-        if proporcao_tela > proporcao_imagem:
-            # Tela mais larga que a imagem
-            nova_altura_img = nova_altura
-            nova_largura_img = nova_altura * proporcao_imagem
-        else:
-            # Tela mais alta que a imagem
-            nova_largura_img = nova_largura
-            nova_altura_img = nova_largura / proporcao_imagem
-        
-        # Redimensiona as imagens do background
         bg_images_temp = []
         for img in self.bg_images:
-            img_redimensionada = pygame.transform.scale(img, (int(nova_largura_img), int(nova_altura_img)))
+            img_redimensionada = pygame.transform.scale(img, (nova_largura, nova_altura))
             bg_images_temp.append(img_redimensionada)
         self.bg_images = bg_images_temp
         self.bg_width = self.bg_images[0].get_width()
         
-        # Redimensiona a imagem do chão proporcionalmente
-        proporcao_ground = self.ground_height / nova_altura
-        nova_altura_ground = int(nova_altura * proporcao_ground)
-        self.ground_image = pygame.transform.scale(self.ground_image, (nova_largura, nova_altura_ground))
+        self.ground_image = pygame.transform.scale(self.ground_image, (nova_largura, self.ground_height))
         self.ground_width = self.ground_image.get_width()
-        self.ground_height = self.ground_image.get_height()
-
-    def reposicionar_elementos(self):
-        # Calcula posições relativas à tela atual
-        largura_tela = self.display_surface.get_width()
-        altura_tela = self.display_surface.get_height()
         
-        # Posiciona o título a 15% da altura da tela
-        posicao_titulo_y = altura_tela * 0.15
-        self.titulo_rect = self.titulo.get_rect(center=(largura_tela // 2, posicao_titulo_y))
-        
-        # Posiciona os botões em 40% e 60% da altura da tela
-        self.start_button.rect.centerx = largura_tela // 2
-        self.start_button.rect.centery = altura_tela * 0.4
-        
-        self.exit_button.rect.centerx = largura_tela // 2
-        self.exit_button.rect.centery = altura_tela * 0.6
-
     def draw_bg(self):
-        largura_tela = self.display_surface.get_width()
-        altura_tela = self.display_surface.get_height()
-        
-        # Calcula o offset para centralizar as imagens
         for x in range(5):
             speed = 1
             for i in self.bg_images:
-                offset_x = (largura_tela - self.bg_width) // 2
-                offset_y = (altura_tela - i.get_height()) // 2
-                pos_x = offset_x + (x * self.bg_width) - self.scroll * speed
-                self.display_surface.blit(i, (pos_x, offset_y))
+                self.display_surface.blit(i, ((x * self.bg_width) - self.scroll * speed, 0))
                 speed += 0.2
 
     def draw_ground(self):
-        largura_tela = self.display_surface.get_width()
-        altura_tela = self.display_surface.get_height()
-        
         for x in range(15):
-            pos_x = (x * self.ground_width) - self.scroll * 2.5
-            pos_y = altura_tela - self.ground_height
-            self.display_surface.blit(self.ground_image, (pos_x, pos_y))
+            self.display_surface.blit(self.ground_image, 
+                                    ((x * self.ground_width) - self.scroll * 2.5, 
+                                     SCREEN_HEIGHT - self.ground_height))
+                                     
+    def reposicionar_elementos(self):
+        self.titulo_rect = self.titulo.get_rect(center=(SCREEN_WIDTH // 2, 100))
+        self.start_button.rect.centerx = SCREEN_WIDTH // 2
+        self.start_button.rect.y = 200
+        self.exit_button.rect.centerx = SCREEN_WIDTH // 2
+        self.exit_button.rect.y = 350
 
     def run(self):
         rodando = True
@@ -154,13 +122,16 @@ class Menu:
             self.display_surface.blit(self.titulo, self.titulo_rect)
 
             if self.start_button.desenhar(self.display_surface):
+                self.bg_music.stop()  # Para a música quando iniciar o jogo
                 return True
                 
             if self.exit_button.desenhar(self.display_surface):
+                self.bg_music.stop()  # Para a música quando sair do jogo
                 return False
 
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
+                    self.bg_music.stop()  # Para a música quando fechar o jogo
                     return False
                     
                 elif evento.type == pygame.VIDEORESIZE:

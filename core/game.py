@@ -32,8 +32,6 @@ class Game:
         self.current_stage.setup_game(self)
 
         self.paused = False
-        self.game_over_active = False
-        self.game_over_screen = None
 
     def import_assets(self):
         self.level_frames = {
@@ -91,22 +89,9 @@ class Game:
         self.bg_music.set_volume(0.5)
 
     def check_game_over(self):
-        if self.data.health <= 0 and self.current_stage.player.death_animation_done:
-            from ui.game_over import GameOver
-            if not self.game_over_active:
-                self.game_over_screen = GameOver()
-                self.game_over_active = True
-            
-            if self.game_over_screen.run():
-                # Reinicia o jogo
-                self.game_over_active = False
-                self.data.health = 5  # Reseta a vida
-                self.current_stage = Level(self.tmx_maps[0], self.level_frames, self.data)
-                self.current_stage.setup_stage_func(self.switch_stage)
-                self.current_stage.setup_game(self)
-            else:
-                pygame.quit()
-                sys.exit()
+        if self.data.health <= 0:
+            pygame.quit()
+            sys.exit()
 
     def run(self):
         """Loop principal do jogo."""
@@ -122,9 +107,13 @@ class Game:
                     self.current_stage.handle_puzzle_events(event)
 
             # Atualiza e renderiza o nível atual
+            self.check_game_over()
+            
+            # Renderiza o jogo base primeiro
             if not self.paused:
                 self.current_stage.run(delta_time)
             else:
+                # Quando pausado, ainda mostra o último frame do jogo
                 self.current_stage.draw_only()
             
             # Renderiza o puzzle por cima se estiver ativo
@@ -133,16 +122,6 @@ class Game:
             
             self.ui.update(delta_time)
             self.ui.draw()
-            
-            # Verifica game over após a renderização
-            if self.data.health <= 0:
-                if not self.current_stage.player.is_dead:
-                    self.current_stage.player.is_dead = True
-                    self.current_stage.player.frame_index = 0
-                
-                if self.current_stage.player.death_animation_done:
-                    self.check_game_over()
-            
             pygame.display.update()
 
     def switch_stage(self, stage_type, level_unlock):

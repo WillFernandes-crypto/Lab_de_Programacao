@@ -47,10 +47,6 @@ class Player(pygame.sprite.Sprite):
 
         self.interacting = False
 
-        # Estados de morte
-        self.is_dead = False
-        self.death_animation_done = False
-
     def input(self):
         keys = pygame.key.get_pressed()
         mouse_buttons = pygame.mouse.get_pressed()  # Pega o estado dos botões do mouse
@@ -173,49 +169,32 @@ class Player(pygame.sprite.Sprite):
     def animate(self, delta_time):
         self.frame_index += ANIMATION_SPEED * delta_time
         
-        # Verifica se a animação de morte terminou
-        if self.state == 'death':
-            if self.frame_index >= len(self.frames[self.state]):
-                self.frame_index = len(self.frames[self.state]) - 1  # Mantém no último frame
-                self.death_animation_done = True
-                return
-        
         # Verifica se a animação de ataque terminou
-        elif self.state in ['attack', 'air_attack']:
+        if self.state in ['attack', 'air_attack']:
             if self.frame_index >= len(self.frames[self.state]):
-                self.attacking = False
+                self.attacking = False  # Reseta o estado de ataque
                 self.frame_index = 0
                 self.state = 'idle'
                 return
         
         # Atualiza o frame atual
-        current_animation = self.frames[self.state]
-        frame_index = int(self.frame_index) % len(current_animation)
-        self.image = current_animation[frame_index]
+        self.image = self.frames[self.state][int(self.frame_index % len(self.frames[self.state]))]
         self.image = self.image if self.facing_right else pygame.transform.flip(self.image, True, False)
 
     def get_state(self):
-        if self.is_dead:
-            self.state = 'death'
-            return
-        
-        if self.timers['hit'].active:
-            self.state = 'hit'
-            return
-        
-        if self.on_surface['floor']:
-            if self.attacking:
-                self.state = 'attack'
-            else:
-                self.state = 'idle' if self.direction.x == 0 else 'walk'
-        else:
-            if self.attacking:
-                self.state = 'air_attack'
-            else:
-                if any((self.on_surface['left'], self.on_surface['right'])):
-                    self.state = 'fall'
+            if self.on_surface['floor']:
+                if self.attacking:
+                    self.state = 'attack'
                 else:
-                    self.state = 'jump' if self.direction.y < 0 else 'fall'
+                    self.state = 'idle' if self.direction.x == 0 else 'walk'
+            else:
+                if self.attacking:
+                    self.state = 'air_attack'
+                else:
+                    if any((self.on_surface['left'], self.on_surface['right'])):
+                        self.state = 'fall'
+                    else:
+                        self.state = 'jump' if self.direction.y < 0 else 'fall'
 
     def get_damage(self):
         if not self.timers['hit'].active:
