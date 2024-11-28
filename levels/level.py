@@ -216,11 +216,13 @@ class Level:
                 item_sprites[0].kill()
 
     def attack_collision(self):
-        for target in self.pearl_sprites.sprites() + self.tooth_sprites.sprites():
-            facing_target = self.player.rect.centerx < target.rect.centerx and self.player.facing_right or \
-                            self.player.rect.centerx > target.rect.centerx and not self.player.facing_right
+        # Filtra apenas os inimigos Tooth da lista de alvos
+        for target in [sprite for sprite in self.tooth_sprites.sprites() if isinstance(sprite, Tooth)]:
+            facing_target = (self.player.rect.centerx < target.rect.centerx and self.player.facing_right) or \
+                           (self.player.rect.centerx > target.rect.centerx and not self.player.facing_right)
+            
             if target.rect.colliderect(self.player.rect) and self.player.attacking and facing_target:
-                target.reverse()
+                target.take_damage()  # Aplica dano ao inimigo
 
     def check_constraint(self):
         # esqueda direita
