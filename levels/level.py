@@ -181,6 +181,22 @@ class Level:
                     else:
                         Sprite((x,y), level_frames['water_body'], self.all_sprites, Z_LAYERS['water'])
 
+        # Carrega os BG details
+        if tmx_map.get_layer_by_name('BG details'):
+            for obj in tmx_map.get_layer_by_name('BG details'):
+                if hasattr(obj, 'image'):
+                    # Usa a posição Y diretamente do Tiled, sem subtrair a altura
+                    pos = (obj.x, obj.y)
+                    
+                    print(f"BG detail '{obj.name}' criado na posição: {pos}")  # Debug
+                    
+                    Sprite(
+                        pos=pos,
+                        surf=obj.image,
+                        groups=[self.all_sprites],
+                        z=Z_LAYERS['bg details']
+                    )
+
     def create_pearl(self, pos, direction):
         Pearl(pos, (self.all_sprites, self.damage_sprites, self.pearl_sprites), self.pearl_surf, direction, 150)
 
