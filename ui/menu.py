@@ -70,35 +70,72 @@ class Menu:
         self.exit_button = Botao(SCREEN_WIDTH // 2 - self.exit_img.get_width() // 2, 350, self.exit_img)
         
     def redimensionar_parallax(self, nova_largura, nova_altura):
+        # Mantém a proporção original das imagens
+        proporcao_tela = nova_largura / nova_altura
+        proporcao_imagem = self.bg_images[0].get_width() / self.bg_images[0].get_height()
+        
+        if proporcao_tela > proporcao_imagem:
+            # Tela mais larga que a imagem
+            nova_altura_img = nova_altura
+            nova_largura_img = nova_altura * proporcao_imagem
+        else:
+            # Tela mais alta que a imagem
+            nova_largura_img = nova_largura
+            nova_altura_img = nova_largura / proporcao_imagem
+        
+        # Redimensiona as imagens do background
         bg_images_temp = []
         for img in self.bg_images:
-            img_redimensionada = pygame.transform.scale(img, (nova_largura, nova_altura))
+            img_redimensionada = pygame.transform.scale(img, (int(nova_largura_img), int(nova_altura_img)))
             bg_images_temp.append(img_redimensionada)
         self.bg_images = bg_images_temp
         self.bg_width = self.bg_images[0].get_width()
         
-        self.ground_image = pygame.transform.scale(self.ground_image, (nova_largura, self.ground_height))
+        # Redimensiona a imagem do chão proporcionalmente
+        proporcao_ground = self.ground_height / nova_altura
+        nova_altura_ground = int(nova_altura * proporcao_ground)
+        self.ground_image = pygame.transform.scale(self.ground_image, (nova_largura, nova_altura_ground))
         self.ground_width = self.ground_image.get_width()
+        self.ground_height = self.ground_image.get_height()
+
+    def reposicionar_elementos(self):
+        # Calcula posições relativas à tela atual
+        largura_tela = self.display_surface.get_width()
+        altura_tela = self.display_surface.get_height()
         
+        # Posiciona o título a 15% da altura da tela
+        posicao_titulo_y = altura_tela * 0.15
+        self.titulo_rect = self.titulo.get_rect(center=(largura_tela // 2, posicao_titulo_y))
+        
+        # Posiciona os botões em 40% e 60% da altura da tela
+        self.start_button.rect.centerx = largura_tela // 2
+        self.start_button.rect.centery = altura_tela * 0.4
+        
+        self.exit_button.rect.centerx = largura_tela // 2
+        self.exit_button.rect.centery = altura_tela * 0.6
+
     def draw_bg(self):
+        largura_tela = self.display_surface.get_width()
+        altura_tela = self.display_surface.get_height()
+        
+        # Calcula o offset para centralizar as imagens
         for x in range(5):
             speed = 1
             for i in self.bg_images:
-                self.display_surface.blit(i, ((x * self.bg_width) - self.scroll * speed, 0))
+                offset_x = (largura_tela - self.bg_width) // 2
+                offset_y = (altura_tela - i.get_height()) // 2
+                pos_x = offset_x + (x * self.bg_width) - self.scroll * speed
+                self.display_surface.blit(i, (pos_x, offset_y))
                 speed += 0.2
 
     def draw_ground(self):
+        largura_tela = self.display_surface.get_width()
+        altura_tela = self.display_surface.get_height()
+        
         for x in range(15):
-            self.display_surface.blit(self.ground_image, 
-                                    ((x * self.ground_width) - self.scroll * 2.5, 
-                                     SCREEN_HEIGHT - self.ground_height))
-                                     
-    def reposicionar_elementos(self):
-        self.titulo_rect = self.titulo.get_rect(center=(SCREEN_WIDTH // 2, 100))
-        self.start_button.rect.centerx = SCREEN_WIDTH // 2
-        self.start_button.rect.y = 200
-        self.exit_button.rect.centerx = SCREEN_WIDTH // 2
-        self.exit_button.rect.y = 350
+            pos_x = (x * self.ground_width) - self.scroll * 2.5
+            pos_y = altura_tela - self.ground_height
+            self.display_surface.blit(self.ground_image, (pos_x, pos_y))
 
     def run(self):
         rodando = True
@@ -109,6 +146,9 @@ class Menu:
             if self.scroll > 3000:
                 self.scroll = 0
 
+            # Limpa a tela com cor preta para evitar artefatos visuais
+            self.display_surface.fill((0, 0, 0))
+            
             self.draw_bg()
             self.draw_ground()
             self.display_surface.blit(self.titulo, self.titulo_rect)
@@ -123,20 +163,16 @@ class Menu:
                 if evento.type == pygame.QUIT:
                     return False
                     
-                elif evento.type == pygame.WINDOWMAXIMIZED:
+                elif evento.type == pygame.VIDEORESIZE:
                     if not self.tela_cheia:
-                        pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
-                    else:
-                        pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
-                    self.tela_cheia = not self.tela_cheia
-                    self.redimensionar_parallax(SCREEN_WIDTH, SCREEN_HEIGHT)
-                    self.reposicionar_elementos()
-                    
-                elif evento.type == pygame.VIDEORESIZE and not self.tela_cheia:
-                    SCREEN_WIDTH = evento.w
-                    SCREEN_HEIGHT = evento.h
-                    pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
-                    self.redimensionar_parallax(SCREEN_WIDTH, SCREEN_HEIGHT)
-                    self.reposicionar_elementos()
+                        # Atualiza as dimensões globais
+                        global SCREEN_WIDTH, SCREEN_HEIGHT
+                        SCREEN_WIDTH = evento.w
+                        SCREEN_HEIGHT = evento.h
+                        # Recria a superfície com o novo tamanho
+                        self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
+                        # Atualiza todos os elementos
+                        self.redimensionar_parallax(SCREEN_WIDTH, SCREEN_HEIGHT)
+                        self.reposicionar_elementos()
 
             pygame.display.update()
