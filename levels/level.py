@@ -75,25 +75,30 @@ class Level:
                     frames = level_frames['player'],
                     data = self.data)
             else:
-                if obj.name in ('barrel', 'crate'):
-                    Sprite((obj.x, obj.y), obj.image, (self.all_sprites, self.collision_sprites))
-                else:
-                    # frames 
-                    frames = level_frames[obj.name] if not 'palm' in obj.name else level_frames['palms'][obj.name]
-                    if obj.name == 'floor_spike' and obj.properties['inverted']:
-                        frames = [pygame.transform.flip(frame, False, True) for frame in frames]
-
-                    # groups 
+                if obj.name == 'door':
+                    frames = level_frames[obj.name]
                     groups = [self.all_sprites]
-                    if obj.name in('palm_small', 'palm_large'): groups.append(self.semi_collision_sprites)
-                    # if obj.name in ('saw', 'floor_spike'): groups.append(self.damage_sprites)
+                    z = Z_LAYERS['bg details']  # Define a porta para estar atrás do player
+                    AnimatedSprite((obj.x, obj.y), frames, groups, z, ANIMATION_SPEED)
+                else:
+                    if obj.name in ('barrel', 'crate'):
+                        Sprite((obj.x, obj.y), obj.image, (self.all_sprites, self.collision_sprites))
+                    else:
+                        # frames 
+                        frames = level_frames[obj.name] if not 'palm' in obj.name else level_frames['palms'][obj.name]
+                        if obj.name == 'floor_spike' and obj.properties['inverted']:
+                            frames = [pygame.transform.flip(frame, False, True) for frame in frames]
 
-                    # z index
-                    z = Z_LAYERS['main'] if not 'bg' in obj.name else Z_LAYERS['bg details']
+                        # groups 
+                        groups = [self.all_sprites]
+                        if obj.name in('palm_small', 'palm_large'): groups.append(self.semi_collision_sprites)
 
-                    # animation speed
-                    animation_speed = ANIMATION_SPEED if not 'palm' in obj.name else ANIMATION_SPEED + uniform(-1,1)
-                    AnimatedSprite((obj.x, obj.y), frames, groups, z, animation_speed)
+                        # z index
+                        z = Z_LAYERS['main'] if not 'bg' in obj.name else Z_LAYERS['bg details']
+
+                        # animation speed
+                        animation_speed = ANIMATION_SPEED if not 'palm' in obj.name else ANIMATION_SPEED + uniform(-1,1)
+                        AnimatedSprite((obj.x, obj.y), frames, groups, z, animation_speed)
             if obj.name == 'flag':
                 self.level_finish_rect = pygame.FRect((obj.x, obj.y), (obj.width, obj.height))    
 
@@ -180,22 +185,6 @@ class Level:
                         AnimatedSprite((x,y), level_frames['water_top'], self.all_sprites, Z_LAYERS['water'])
                     else:
                         Sprite((x,y), level_frames['water_body'], self.all_sprites, Z_LAYERS['water'])
-
-        # Carrega os BG details
-        if tmx_map.get_layer_by_name('BG details'):
-            for obj in tmx_map.get_layer_by_name('BG details'):
-                if hasattr(obj, 'image'):
-                    # Usa a posição Y diretamente do Tiled, sem subtrair a altura
-                    pos = (obj.x, obj.y)
-                    
-                    print(f"BG detail '{obj.name}' criado na posição: {pos}")  # Debug
-                    
-                    Sprite(
-                        pos=pos,
-                        surf=obj.image,
-                        groups=[self.all_sprites],
-                        z=Z_LAYERS['bg details']
-                    )
 
     def create_pearl(self, pos, direction):
         Pearl(pos, (self.all_sprites, self.damage_sprites, self.pearl_sprites), self.pearl_surf, direction, 150)
