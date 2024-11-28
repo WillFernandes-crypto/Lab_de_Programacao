@@ -85,7 +85,7 @@ class Game:
 			'damage': pygame.mixer.Sound(join('assets', 'audio', 'damage.wav')),
 			'pearl': pygame.mixer.Sound(join('assets', 'audio', 'pearl.wav')),
 		}
-        self.bg_music = pygame.mixer.Sound(join('assets', 'audio', 'starlight_city.mp3'))
+        self.bg_music = pygame.mixer.Sound(join('assets', 'audio', 'menu', 'emptiness_machine.mp3'))
         self.bg_music.set_volume(0.5)
 
     def check_game_over(self):
@@ -94,29 +94,39 @@ class Game:
             sys.exit()
 
     def run(self):
-        """Loop principal do jogo."""
         while True:
             delta_time = self.clock.tick(60) / 1000
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                     
-                # Passa os eventos para o puzzle quando estiver ativo
                 if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
                     self.current_stage.handle_puzzle_events(event)
 
-            # Atualiza e renderiza o nível atual
-            self.check_game_over()
-            
-            # Renderiza o jogo base primeiro
+            # Verifica game over antes de atualizar
+            if self.data.health <= 0:
+                if not self.current_stage.player.is_dead:
+                    self.current_stage.player.is_dead = True
+                    self.current_stage.player.frame_index = 0
+                
+                # Ainda renderiza o jogo para mostrar a animação de morte
+                self.current_stage.run(delta_time)
+                self.ui.update(delta_time)
+                self.ui.draw()
+                pygame.display.update()
+                
+                # Verifica se a animação terminou para mostrar a tela de game over
+                self.check_game_over()
+                continue
+
+            # Resto do loop do jogo
             if not self.paused:
                 self.current_stage.run(delta_time)
             else:
-                # Quando pausado, ainda mostra o último frame do jogo
                 self.current_stage.draw_only()
             
-            # Renderiza o puzzle por cima se estiver ativo
             if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
                 self.current_stage.run_puzzle(delta_time)
             
