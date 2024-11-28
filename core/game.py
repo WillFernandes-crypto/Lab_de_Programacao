@@ -9,11 +9,12 @@ from core.data import Data
 from pytmx.util_pygame import load_pygame
 from os.path import join
 import sys  # Para permitir encerramento correto do jogo
+from ui.game_over import GameOver
 
 class Game:
     def __init__(self):
         # Inicializa o Pygame e configura o jogo
-        self.display_surface = pygame.display.get_surface()
+        self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("The Empytiness Machine")
         self.clock = pygame.time.Clock()
         self.import_assets()
@@ -21,10 +22,6 @@ class Game:
         self.ui = UI(self.font, self.ui_frames)
         self.data = Data(self.ui)
 
-        # Carrega e configura a música do jogo
-        self.game_music = pygame.mixer.Sound(join('assets', 'audio', 'gaming', 'heavy_crown.mp3'))
-        self.game_music.set_volume(0.5)
-        self.game_music.play(loops=-1)  # Inicia a música em loop
 
         # Carrega os mapas
         self.tmx_maps = {
@@ -35,6 +32,11 @@ class Game:
         self.current_stage.setup_stage_func(self.switch_stage)
         self.current_stage.setup_game(self)
 
+        # Inicializa a música do jogo
+        self.game_music = pygame.mixer.Sound(join('assets', 'audio', 'gaming', 'heavy_crown.mp3'))
+        self.game_music.set_volume(0.5)
+        self.game_music.play(loops=-1)  # Começa tocando em loop
+        
         self.paused = False
 
     def import_assets(self):
@@ -94,9 +96,25 @@ class Game:
 
     def check_game_over(self):
         if self.data.health <= 0:
-            self.game_music.stop()  # Para a música quando der game over
-            pygame.quit()
-            sys.exit()
+            # Para a música do jogo
+            if hasattr(self, 'game_music'):
+                self.game_music.stop()
+                
+            # Cria e executa a tela de game over
+            game_over = GameOver()
+            if game_over.run():  # Se o jogador escolher "Retry"
+                # Reinicia o jogo
+                self.data.health = 3  # Reseta a vida do jogador
+                self.current_stage = Level(self.tmx_maps[0], self.level_frames, self.data)
+                self.current_stage.setup_stage_func(self.switch_stage)
+                self.current_stage.setup_game(self)
+                
+                # Reinicia a música
+                if hasattr(self, 'game_music'):
+                    self.game_music.play(loops=-1)
+            else:  # Se o jogador escolher "Exit"
+                pygame.quit()
+                sys.exit()
 
     def run(self):
         """Loop principal do jogo."""
@@ -104,7 +122,6 @@ class Game:
             delta_time = self.clock.tick(60) / 1000
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.game_music.stop()  # Para a música ao sair do jogo
                     pygame.quit()
                     sys.exit()
                     
@@ -113,7 +130,7 @@ class Game:
                     self.current_stage.handle_puzzle_events(event)
 
             # Atualiza e renderiza o nível atual
-            self.check_game_over()
+            self.check_game_over()  # Verifica game over antes de atualizar
             
             # Controla a música baseado no estado do puzzle
             if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
