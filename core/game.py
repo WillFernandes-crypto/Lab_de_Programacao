@@ -13,7 +13,7 @@ import sys  # Para permitir encerramento correto do jogo
 class Game:
     def __init__(self):
         # Inicializa o Pygame e configura o jogo
-        self.display_surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
+        self.display_surface = pygame.display.get_surface()
         pygame.display.set_caption("The Empytiness Machine")
         self.clock = pygame.time.Clock()
         self.import_assets()
@@ -21,6 +21,10 @@ class Game:
         self.ui = UI(self.font, self.ui_frames)
         self.data = Data(self.ui)
 
+        # Carrega e configura a música do jogo
+        self.game_music = pygame.mixer.Sound(join('assets', 'audio', 'gaming', 'heavy_crown.mp3'))
+        self.game_music.set_volume(0.5)
+        self.game_music.play(loops=-1)  # Inicia a música em loop
 
         # Carrega os mapas
         self.tmx_maps = {
@@ -90,6 +94,7 @@ class Game:
 
     def check_game_over(self):
         if self.data.health <= 0:
+            self.game_music.stop()  # Para a música quando der game over
             pygame.quit()
             sys.exit()
 
@@ -99,6 +104,7 @@ class Game:
             delta_time = self.clock.tick(60) / 1000
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.game_music.stop()  # Para a música ao sair do jogo
                     pygame.quit()
                     sys.exit()
                     
@@ -108,6 +114,12 @@ class Game:
 
             # Atualiza e renderiza o nível atual
             self.check_game_over()
+            
+            # Controla a música baseado no estado do puzzle
+            if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
+                self.game_music.stop()
+            elif not pygame.mixer.get_busy():  # Se a música não estiver tocando
+                self.game_music.play(loops=-1)
             
             # Renderiza o jogo base primeiro
             if not self.paused:
