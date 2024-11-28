@@ -44,7 +44,7 @@ class Game:
 			'big_chain': import_folder('assets', 'graphics','level', 'big_chains'),
 			'small_chain': import_folder('assets', 'graphics','level', 'small_chains'),
 			'candle_light': import_folder('assets', 'graphics','level', 'candle light'),
-			'player': import_sub_folders('assets', 'images','player'),
+			'player': import_sub_folders('assets', 'graphics','player'),
 			'saw': import_folder('assets', 'graphics', 'enemies', 'saw', 'animation'),
 			'saw_chain': import_image('assets',  'graphics', 'enemies', 'saw', 'saw_chain'),
 			'helicopter': import_folder('assets', 'graphics', 'level', 'helicopter'),
