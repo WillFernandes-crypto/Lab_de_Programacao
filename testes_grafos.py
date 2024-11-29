@@ -60,13 +60,24 @@ def main():
         
         screen.fill((0, 0, 0))
         
-        # Renderiza a questão
-        y = render_text(screen, question, font, 50)
+        # Renderiza a questão e o grafo visual
+        parts = question.split('\n\n')
+        y = 50
+        for part in parts:
+            if '---' in part or '\\' in part:  # É um grafo visual
+                # Renderiza o grafo linha por linha sem formatação
+                for line in part.split('\n'):
+                    text_surface = font.render(line, True, (255, 255, 255))
+                    screen.blit(text_surface, (50, y))
+                    y += 30
+            else:
+                # Renderiza o texto normal com formatação
+                y = render_text(screen, part, font, y)
+            y += 20
         
         # Renderiza a entrada do usuário
         input_text = f"Sua resposta: {user_input}"
-        text_surface = font.render(input_text, True, (255, 255, 255))
-        screen.blit(text_surface, (50, y + 30))
+        y = render_text(screen, input_text, font, y + 30)
         
         pygame.display.flip()
 

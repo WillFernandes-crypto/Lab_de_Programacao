@@ -61,13 +61,15 @@ def main():
         
         # Renderiza a questão
         y = render_text(screen, question, font, 50)
+        y += 20  # Espaço extra entre a questão e as opções
         
         # Renderiza as opções
         for i, option in enumerate(options):
             color = (0, 255, 0) if selected_option == i else (255, 255, 255)
-            text = f"{i+1}. {option}"
-            text_surface = font.render(text, True, color)
-            screen.blit(text_surface, (50, y + (i * 40)))
+            # Formata cada opção e adiciona o número
+            formatted_option = f"{i+1}. {option}"
+            y = render_text(screen, formatted_option, font, y, max_width=650)
+            y += 10  # Espaço extra entre opções
         
         pygame.display.flip()
 

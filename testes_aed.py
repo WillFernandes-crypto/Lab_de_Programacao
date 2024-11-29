@@ -61,13 +61,12 @@ def main():
         
         screen.fill((0, 0, 0))
         
-        # Renderiza o texto do puzzle usando get_puzzle_text()
+        # Renderiza o texto do puzzle
         y = render_text(screen, puzzle.get_puzzle_text(), font, 50)
         
-        # Renderiza a entrada do usuário
+        # Renderiza a entrada do usuário com espaçamento adequado
         input_text = f"Sua resposta: {user_input}"
-        text_surface = font.render(input_text, True, (255, 255, 255))
-        screen.blit(text_surface, (50, y + 30))
+        y = render_text(screen, input_text, font, y + 40)
         
         pygame.display.flip()
 
