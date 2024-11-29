@@ -4,7 +4,7 @@ from entities.player import *
 from entities.enemies import *
 from core.groups import *
 from puzzles.automata_puzzle import *
-from puzzles.puzzle_manager import PuzzleManager
+from puzzles.puzzle_manager import *
 from random import uniform
 
 class Level:
@@ -287,7 +287,7 @@ class Level:
                 # Se o puzzle foi completado, marca como concluído e avança para o próximo nível
                 if self.automata_puzzle.completed:
                     self.puzzle_completed = True  # Marca o puzzle como concluído
-                    self.switch_stage('overworld', self.level_unlock)
+                    self.switch_stage('0', self.level_unlock)
     
     def run(self, delta_time):
         """Método principal de execução do nível"""
