@@ -1,5 +1,6 @@
 import random
 from typing import List, Tuple, Dict, Set
+import pygame
 
 class GraphsPuzzle:
     def __init__(self):
@@ -8,7 +9,13 @@ class GraphsPuzzle:
             self.minimum_spanning_tree_puzzle,
             self.graph_coloring_puzzle
         ]
+        self.completed = False
+        self.escape_pressed = False
         
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.escape_pressed = True
+    
     def get_random_puzzle(self) -> Tuple[str, str]:
         """Retorna um puzzle aleatório sobre grafos"""
         puzzle_func = random.choice(self.puzzles)
@@ -81,3 +88,12 @@ class GraphsPuzzle:
         C: Azul
         D: Vermelho"""
         return question, answer
+    
+    def check_solution(self, answer):
+        question, correct_answer = self.current_puzzle
+        self.completed = answer.strip().lower() == correct_answer.strip().lower()
+        return self.completed
+    
+    def get_puzzle_text(self):
+        self.current_puzzle = self.get_random_puzzle()
+        return self.current_puzzle[0]

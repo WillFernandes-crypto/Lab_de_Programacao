@@ -1,9 +1,11 @@
 import random
 from abc import ABC, abstractmethod
+import pygame
 
 class AEDPuzzle(ABC):
     def __init__(self):
         self.completed = False
+        self.escape_pressed = False
         
     @abstractmethod
     def check_solution(self, answer):
@@ -12,6 +14,10 @@ class AEDPuzzle(ABC):
     @abstractmethod
     def get_puzzle_text(self):
         pass
+
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.escape_pressed = True
 
 class SortingPuzzle(AEDPuzzle):
     def __init__(self):

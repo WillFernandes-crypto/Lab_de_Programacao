@@ -1,5 +1,6 @@
 import random
 from typing import List, Tuple, Dict
+import pygame
 
 class TheoryPuzzle:
     def __init__(self):
@@ -8,7 +9,13 @@ class TheoryPuzzle:
             self.complexity_puzzle,
             self.computability_puzzle
         ]
+        self.completed = False
+        self.escape_pressed = False
         
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.escape_pressed = True
+    
     def get_random_puzzle(self) -> Tuple[str, List[str], int]:
         """Retorna um puzzle aleatório sobre teoria da computação"""
         puzzle_func = random.choice(self.puzzles)
@@ -129,3 +136,16 @@ class TheoryPuzzle:
         </script>
         """
         return html
+
+    def check_solution(self, answer):
+        try:
+            answer_index = int(answer)
+            self.completed = answer_index == self.current_correct_answer
+            return self.completed
+        except:
+            return False
+
+    def get_puzzle_text(self):
+        question, options, correct = self.get_random_puzzle()
+        self.current_correct_answer = correct
+        return question + "\n\n" + "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(options)])
