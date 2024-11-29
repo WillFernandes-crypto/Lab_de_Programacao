@@ -34,10 +34,7 @@ class SortingPuzzle(AEDPuzzle):
             return False
             
     def get_puzzle_text(self):
-        sequence = ' '.join(map(str, self.selected_sequence[0]))
-        return format_puzzle_text(
-            f"Ordene a seguinte sequência em ordem crescente:\n{sequence}"
-        )
+        return f"Ordene a seguinte sequência em ordem crescente: {' '.join(map(str, self.selected_sequence[0]))}"
 
 class BinarySearchTreePuzzle(AEDPuzzle):
     def __init__(self):
@@ -87,7 +84,10 @@ class GraphTraversalPuzzle(AEDPuzzle):
             
     def get_puzzle_text(self):
         edges_text = ', '.join([f"{e[0]}-{e[1]}" for e in self.selected_graph['edges']])
-        return f"Para o grafo com arestas: {edges_text}, forneça a ordem de visitação usando BFS começando do vértice A (separados por vírgula)"
+        return format_puzzle_text(
+            f"Para o grafo com arestas: {edges_text}, forneça a ordem de visitação usando BFS começando do vértice A (separados por vírgula)",
+            max_chars_per_line=35
+        )
 
 def create_random_aed_puzzle():
     puzzle_types = [SortingPuzzle, BinarySearchTreePuzzle, GraphTraversalPuzzle]
