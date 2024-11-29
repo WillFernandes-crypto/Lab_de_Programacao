@@ -1,11 +1,10 @@
 import random
 from abc import ABC, abstractmethod
-import pygame
+from utils.text_formatter import format_puzzle_text
 
 class AEDPuzzle(ABC):
     def __init__(self):
         self.completed = False
-        self.escape_pressed = False
         
     @abstractmethod
     def check_solution(self, answer):
@@ -14,10 +13,6 @@ class AEDPuzzle(ABC):
     @abstractmethod
     def get_puzzle_text(self):
         pass
-
-    def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.escape_pressed = True
 
 class SortingPuzzle(AEDPuzzle):
     def __init__(self):
@@ -39,7 +34,10 @@ class SortingPuzzle(AEDPuzzle):
             return False
             
     def get_puzzle_text(self):
-        return f"Ordene a seguinte sequência em ordem crescente: {' '.join(map(str, self.selected_sequence[0]))}"
+        sequence = ' '.join(map(str, self.selected_sequence[0]))
+        return format_puzzle_text(
+            f"Ordene a seguinte sequência em ordem crescente:\n{sequence}"
+        )
 
 class BinarySearchTreePuzzle(AEDPuzzle):
     def __init__(self):

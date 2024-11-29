@@ -1,6 +1,6 @@
 import random
 from typing import List, Tuple, Dict
-import pygame
+from utils.text_formatter import format_puzzle_text
 
 class TheoryPuzzle:
     def __init__(self):
@@ -9,13 +9,7 @@ class TheoryPuzzle:
             self.complexity_puzzle,
             self.computability_puzzle
         ]
-        self.completed = False
-        self.escape_pressed = False
         
-    def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.escape_pressed = True
-    
     def get_random_puzzle(self) -> Tuple[str, List[str], int]:
         """Retorna um puzzle aleatório sobre teoria da computação"""
         puzzle_func = random.choice(self.puzzles)
@@ -23,16 +17,16 @@ class TheoryPuzzle:
     
     def turing_machine_puzzle(self) -> Tuple[str, List[str], int]:
         """Puzzle sobre Máquina de Turing"""
-        question = """
+        question = format_puzzle_text("""
         Considere uma Máquina de Turing M que aceita a linguagem L = {w#w | w ∈ {0,1}*}.
         Qual das seguintes afirmações é verdadeira sobre esta máquina?
-        """
+        """)
         
         options = [
-            "A máquina precisa apenas de uma fita para reconhecer esta linguagem",
-            "A máquina precisa necessariamente de duas fitas para reconhecer esta linguagem",
-            "A máquina precisa de memória infinita para reconhecer qualquer entrada",
-            "Esta linguagem não pode ser reconhecida por uma Máquina de Turing"
+            format_puzzle_text("A máquina precisa apenas de uma fita para reconhecer esta linguagem"),
+            format_puzzle_text("A máquina precisa necessariamente de duas fitas para reconhecer esta linguagem"),
+            format_puzzle_text("A máquina precisa de memória infinita para reconhecer qualquer entrada"),
+            format_puzzle_text("Esta linguagem não pode ser reconhecida por uma Máquina de Turing")
         ]
         
         correct_answer = 0  # índice da resposta correta (0-based)
@@ -136,16 +130,3 @@ class TheoryPuzzle:
         </script>
         """
         return html
-
-    def check_solution(self, answer):
-        try:
-            answer_index = int(answer)
-            self.completed = answer_index == self.current_correct_answer
-            return self.completed
-        except:
-            return False
-
-    def get_puzzle_text(self):
-        question, options, correct = self.get_random_puzzle()
-        self.current_correct_answer = correct
-        return question + "\n\n" + "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(options)])

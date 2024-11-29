@@ -6,6 +6,35 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Teste - Puzzle de Teoria")
 
+def render_text(screen, text, font, start_y, max_width=700):
+    words = text.split()
+    lines = []
+    current_line = []
+    
+    for word in words:
+        test_line = ' '.join(current_line + [word])
+        test_surface = font.render(test_line, True, (255, 255, 255))
+        
+        if test_surface.get_width() > max_width:
+            if current_line:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+            else:
+                lines.append(word)
+        else:
+            current_line.append(word)
+    
+    if current_line:
+        lines.append(' '.join(current_line))
+    
+    y = start_y
+    for line in lines:
+        text_surface = font.render(line, True, (255, 255, 255))
+        screen.blit(text_surface, (50, y))
+        y += 30
+    
+    return y
+
 def main():
     theory = TheoryPuzzle()
     question, options, correct = theory.get_random_puzzle()
@@ -29,20 +58,16 @@ def main():
                     selected_option = None
         
         screen.fill((0, 0, 0))
-        y = 50
         
         # Renderiza a questão
-        for line in question.split('\n'):
-            text = font.render(line, True, (255, 255, 255))
-            screen.blit(text, (50, y))
-            y += 40
+        y = render_text(screen, question, font, 50)
         
         # Renderiza as opções
         for i, option in enumerate(options):
             color = (0, 255, 0) if selected_option == i else (255, 255, 255)
-            text = font.render(f"{i+1}. {option}", True, color)
-            screen.blit(text, (50, y))
-            y += 40
+            text = f"{i+1}. {option}"
+            text_surface = font.render(text, True, color)
+            screen.blit(text_surface, (50, y + (i * 40)))
         
         pygame.display.flip()
 

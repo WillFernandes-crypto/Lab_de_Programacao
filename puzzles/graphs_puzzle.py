@@ -1,6 +1,6 @@
 import random
 from typing import List, Tuple, Dict, Set
-import pygame
+from utils.text_formatter import format_puzzle_text
 
 class GraphsPuzzle:
     def __init__(self):
@@ -9,13 +9,7 @@ class GraphsPuzzle:
             self.minimum_spanning_tree_puzzle,
             self.graph_coloring_puzzle
         ]
-        self.completed = False
-        self.escape_pressed = False
         
-    def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.escape_pressed = True
-    
     def get_random_puzzle(self) -> Tuple[str, str]:
         """Retorna um puzzle aleatório sobre grafos"""
         puzzle_func = random.choice(self.puzzles)
@@ -23,16 +17,7 @@ class GraphsPuzzle:
     
     def shortest_path_puzzle(self) -> Tuple[str, str]:
         """Puzzle sobre caminho mais curto em um grafo ponderado"""
-        graph = {
-            'A': {'B': 4, 'C': 2},
-            'B': {'A': 4, 'C': 1, 'D': 5},
-            'C': {'A': 2, 'B': 1, 'D': 8, 'E': 10},
-            'D': {'B': 5, 'C': 8, 'E': 2},
-            'E': {'C': 10, 'D': 2}
-        }
-        
-        question = """
-        Dado o grafo ponderado abaixo:
+        graph_visual = """
         A --4-- B
         |      /|
         2    1  5
@@ -42,12 +27,16 @@ class GraphsPuzzle:
          10  2
           \\ /
            E
-        
-        Qual é o caminho mais curto de A até E e qual é a soma total dos pesos deste caminho?
         """
         
-        answer = "O caminho mais curto é A -> C -> B -> D -> E com peso total de 10 (2 + 1 + 5 + 2)"
-        return question, answer
+        question = format_puzzle_text(
+            "Dado o grafo ponderado abaixo, qual é o caminho mais curto de A até E " +
+            "e qual é a soma total dos pesos deste caminho?"
+        )
+        
+        return f"{question}\n\n{graph_visual}", format_puzzle_text(
+            "O caminho mais curto é A -> C -> B -> D -> E com peso total de 10 (2 + 1 + 5 + 2)"
+        )
     
     def minimum_spanning_tree_puzzle(self) -> Tuple[str, str]:
         """Puzzle sobre árvore geradora mínima"""
@@ -88,12 +77,3 @@ class GraphsPuzzle:
         C: Azul
         D: Vermelho"""
         return question, answer
-    
-    def check_solution(self, answer):
-        question, correct_answer = self.current_puzzle
-        self.completed = answer.strip().lower() == correct_answer.strip().lower()
-        return self.completed
-    
-    def get_puzzle_text(self):
-        self.current_puzzle = self.get_random_puzzle()
-        return self.current_puzzle[0]

@@ -6,11 +6,40 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Teste - Puzzle de Grafos")
 
+def render_text(screen, text, font, start_y, max_width=700):
+    words = text.split()
+    lines = []
+    current_line = []
+    
+    for word in words:
+        test_line = ' '.join(current_line + [word])
+        test_surface = font.render(test_line, True, (255, 255, 255))
+        
+        if test_surface.get_width() > max_width:
+            if current_line:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+            else:
+                lines.append(word)
+        else:
+            current_line.append(word)
+    
+    if current_line:
+        lines.append(' '.join(current_line))
+    
+    y = start_y
+    for line in lines:
+        text_surface = font.render(line, True, (255, 255, 255))
+        screen.blit(text_surface, (50, y))
+        y += 30
+    
+    return y
+
 def main():
     graphs = GraphsPuzzle()
     font = pygame.font.Font(None, 32)
     user_input = ""
-    question, answer = graphs.minimum_spanning_tree_puzzle()
+    question, answer = graphs.get_random_puzzle()
     
     while True:
         for event in pygame.event.get():
@@ -24,7 +53,7 @@ def main():
                 elif event.key == pygame.K_BACKSPACE:
                     user_input = user_input[:-1]
                 elif event.key == pygame.K_SPACE:
-                    question, answer = graphs.minimum_spanning_tree_puzzle()
+                    question, answer = graphs.get_random_puzzle()
                     user_input = ""
                 else:
                     user_input += event.unicode
@@ -32,15 +61,12 @@ def main():
         screen.fill((0, 0, 0))
         
         # Renderiza a questão
-        y = 50
-        for line in question.split('\n'):
-            text = font.render(line, True, (255, 255, 255))
-            screen.blit(text, (50, y))
-            y += 30
+        y = render_text(screen, question, font, 50)
         
         # Renderiza a entrada do usuário
-        input_text = font.render(f"Sua resposta: {user_input}", True, (255, 255, 255))
-        screen.blit(input_text, (50, y + 30))
+        input_text = f"Sua resposta: {user_input}"
+        text_surface = font.render(input_text, True, (255, 255, 255))
+        screen.blit(text_surface, (50, y + 30))
         
         pygame.display.flip()
 
