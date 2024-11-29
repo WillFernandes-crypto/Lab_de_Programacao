@@ -387,3 +387,12 @@ class AutomataPuzzle:
             
         except AttributeError:
             return False
+    
+    def get_puzzle_text(self):
+        """Retorna o texto do puzzle baseado no tipo selecionado"""
+        puzzle_descriptions = {
+            'ab': "Construa um autômato finito que aceite a linguagem L = {ab}",
+            'aab': "Construa um autômato finito que aceite a linguagem L = {aab}",
+            'aba': "Construa um autômato finito que aceite a linguagem L = {aba}"
+        }
+        return puzzle_descriptions[self.puzzle_type]
