@@ -15,9 +15,12 @@ class PuzzleManager:
         }
         self.current_puzzle = None
         self.current_type = None
+        self.text_y_position = 50
+        
+        # Inicializando atributos que faltavam
         self.display_surface = pygame.display.get_surface()
-        self.font = pygame.font.Font(None, 32)
         self.user_input = ""
+        self.font = pygame.font.Font(None, 36)
     
     def create_puzzle(self, puzzle_type=None):
         """
@@ -60,43 +63,24 @@ class PuzzleManager:
         Args:
             event: Evento do Pygame
         """
-        if self.current_puzzle:
-            # Gerencia o ESC
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.current_puzzle.escape_pressed = True
-                return
-                
-            # Gerencia entrada do usuário
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    if hasattr(self.current_puzzle, 'check_solution'):
-                        self.current_puzzle.check_solution(self.user_input)
-                elif event.key == pygame.K_BACKSPACE:
-                    self.user_input = self.user_input[:-1]
-                else:
-                    self.user_input += event.unicode
+        if self.current_puzzle and hasattr(self.current_puzzle, 'handle_event'):
+            self.current_puzzle.handle_event(event)
     
     def update(self, delta_time):
-        """
-        Atualiza o puzzle atual
-        
-        Args:
-            delta_time: Tempo desde o último frame
-        """
-        if not self.current_puzzle:
-            return
+        """Atualiza e renderiza o puzzle atual"""
+        if self.current_puzzle:
+            self.display_surface.fill((0, 0, 0))  # Fundo preto
             
-        self.display_surface.fill('black')
-        
-        # Renderiza o texto do puzzle
-        if hasattr(self.current_puzzle, 'get_puzzle_text'):
-            text = self.current_puzzle.get_puzzle_text()
-            y = 50
-            for line in text.split('\n'):
-                text_surf = self.font.render(line, True, (255, 255, 255))
-                self.display_surface.blit(text_surf, (50, y))
-                y += 40
-        
-        # Renderiza a entrada do usuário
-        input_text = self.font.render(f"Sua resposta: {self.user_input}", True, (255, 255, 255))
-        self.display_surface.blit(input_text, (50, y + 30))
+            # Renderiza o texto do puzzle
+            question_text = self.current_puzzle.get_puzzle_text()
+            y = self.text_y_position
+            
+            # Quebra o texto em linhas se necessário
+            for line in question_text.split('\n'):
+                text = self.font.render(line, True, (255, 255, 255))
+                self.display_surface.blit(text, (50, y))
+                y += 30
+            
+            # Renderiza a entrada do usuário
+            input_text = self.font.render(f"Sua resposta: {self.user_input}", True, (255, 255, 255))
+            self.display_surface.blit(input_text, (50, y + 30))
