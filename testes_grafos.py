@@ -6,7 +6,7 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Teste - Puzzle de Grafos")
 
-def render_text(screen, text, font, start_y, max_width=700):
+def render_text(screen, text, font, start_y, max_width=500):
     words = text.split()
     lines = []
     current_line = []
@@ -30,7 +30,8 @@ def render_text(screen, text, font, start_y, max_width=700):
     y = start_y
     for line in lines:
         text_surface = font.render(line, True, (255, 255, 255))
-        screen.blit(text_surface, (50, y))
+        x = (800 - text_surface.get_width()) // 2
+        screen.blit(text_surface, (x, y))
         y += 30
     
     return y

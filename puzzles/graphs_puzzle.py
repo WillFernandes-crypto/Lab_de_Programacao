@@ -17,7 +17,16 @@ class GraphsPuzzle:
     
     def shortest_path_puzzle(self) -> Tuple[str, str]:
         """Puzzle sobre caminho mais curto em um grafo ponderado"""
-        graph_visual = """
+        graph = {
+            'A': {'B': 4, 'C': 2},
+            'B': {'A': 4, 'C': 1, 'D': 5},
+            'C': {'A': 2, 'B': 1, 'D': 8, 'E': 10},
+            'D': {'B': 5, 'C': 8, 'E': 2},
+            'E': {'C': 10, 'D': 2}
+        }
+        
+        question = """
+        Dado o grafo ponderado abaixo:
         A --4-- B
         |      /|
         2    1  5
@@ -27,32 +36,38 @@ class GraphsPuzzle:
          10  2
           \\ /
            E
+        
+        Qual é o caminho mais curto de A até E e qual é a soma total dos pesos deste caminho?
         """
         
-        question = format_puzzle_text(
-            "Dado o grafo ponderado abaixo, qual é o caminho mais curto de A até E " +
-            "e qual é a soma total dos pesos deste caminho?"
-        )
-        
-        return f"{question}\n\n{graph_visual}", format_puzzle_text(
-            "O caminho mais curto é A -> C -> B -> D -> E com peso total de 10 (2 + 1 + 5 + 2)"
-        )
+        answer = "O caminho mais curto é A -> C -> B -> D -> E com peso total de 10 (2 + 1 + 5 + 2)"
+        return question, answer
     
     def minimum_spanning_tree_puzzle(self) -> Tuple[str, str]:
         """Puzzle sobre árvore geradora mínima"""
-        question = """
-        Dado o grafo não-direcionado ponderado abaixo:
+        text_question = format_puzzle_text(
+            "Dado o grafo não-direcionado ponderado abaixo:",
+            max_chars_per_line=40
+        )
+        
+        graph_visual = """
         A ---3--- B
-        |\\      /|
-        4  2   6  5
-        |    X   |
-        C ---1-- D
+        |\      /|
+        4 2   6  5
+        |   X    |
+        C ---1--- D"""
         
-        Encontre a Árvore Geradora Mínima (MST) e a soma total dos seus pesos.
-        """
+        text_instruction = format_puzzle_text(
+            "Encontre a Árvore Geradora Mínima (MST) e a soma total dos seus pesos.",
+            max_chars_per_line=35
+        )
         
-        answer = "A MST é formada pelas arestas: C-D (1), A-B (3), B-D (5) com peso total de 9"
-        return question, answer
+        answer = format_puzzle_text(
+            "A MST é formada pelas arestas: C-D (1), A-B (3), B-D (5) com peso total de 9",
+            max_chars_per_line=35
+        )
+        
+        return f"{text_question}\n\n{graph_visual}\n\n{text_instruction}", answer
     
     def graph_coloring_puzzle(self) -> Tuple[str, str]:
         """Puzzle sobre coloração de grafos"""
