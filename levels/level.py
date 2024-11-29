@@ -246,18 +246,17 @@ class Level:
         
     def handle_puzzle_events(self, event):
         """Gerencia eventos específicos do puzzle"""
-        if self.puzzle_active and self.puzzle_manager:
-            self.puzzle_manager.handle_event(event)
+        if self.puzzle_active and self.automata_puzzle:
+            self.automata_puzzle.handle_event(event)
             
     def check_flag_interaction(self):
         """Verifica interação com a bandeira apenas se o puzzle ainda não foi completado"""
         if (self.player.hitbox_rect.colliderect(self.level_finish_rect) and 
             self.player.interacting and 
             not self.puzzle_active and 
-            not self.puzzle_completed):
+            not self.puzzle_completed):  # Verifica se o puzzle já foi completado
             self.puzzle_active = True
-            self.puzzle_manager = PuzzleManager()
-            self.puzzle_manager.create_puzzle()  # Cria um puzzle aleatório
+            self.automata_puzzle = AutomataPuzzle()
             if self.game:
                 self.game.paused = True
                 
@@ -277,22 +276,19 @@ class Level:
         
     def run_puzzle(self, delta_time):
         """Executa apenas a lógica do puzzle"""
-        if self.puzzle_active:
-            if self.puzzle_manager.current_puzzle:
-                self.puzzle_manager.update(delta_time)
-                
-                # Verifica se o puzzle foi completado ou cancelado
-                if self.puzzle_manager.current_puzzle.completed:
-                    self.puzzle_completed = True
-                    self.puzzle_active = False
-                    if self.game:
-                        self.game.paused = False
+        if self.puzzle_active and self.automata_puzzle:
+            self.automata_puzzle.run(delta_time)
+            
+            # Só fecha o puzzle quando o ESC for pressionado
+            if self.automata_puzzle.escape_pressed:
+                self.puzzle_active = False
+                if self.game:
+                    self.game.paused = False
+                # Se o puzzle foi completado, marca como concluído e avança para o próximo nível
+                if self.automata_puzzle.completed:
+                    self.puzzle_completed = True  # Marca o puzzle como concluído
                     self.switch_stage('overworld', self.level_unlock)
-                elif hasattr(self.puzzle_manager.current_puzzle, 'escape_pressed') and self.puzzle_manager.current_puzzle.escape_pressed:
-                    self.puzzle_active = False
-                    if self.game:
-                        self.game.paused = False
-
+    
     def run(self, delta_time):
         """Método principal de execução do nível"""
         if not self.puzzle_active:

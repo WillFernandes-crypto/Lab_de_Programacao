@@ -117,7 +117,6 @@ class Game:
                 sys.exit()
 
     def run(self):
-        """Loop principal do jogo."""
         while True:
             delta_time = self.clock.tick(60) / 1000
             for event in pygame.event.get():
@@ -125,29 +124,23 @@ class Game:
                     pygame.quit()
                     sys.exit()
                     
-                # Passa os eventos para o puzzle quando estiver ativo
                 if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
                     self.current_stage.handle_puzzle_events(event)
 
-            # Atualiza e renderiza o nível atual
-            self.check_game_over()  # Verifica game over antes de atualizar
+            self.check_game_over()
             
-            # Controla a música baseado no estado do puzzle
+            # Controle mais rigoroso do estado do jogo
             if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
-                self.game_music.stop()
-            elif not pygame.mixer.get_busy():  # Se a música não estiver tocando
-                self.game_music.play(loops=-1)
-            
-            # Renderiza o jogo base primeiro
-            if not self.paused:
-                self.current_stage.run(delta_time)
-            else:
-                # Quando pausado, ainda mostra o último frame do jogo
-                self.current_stage.draw_only()
-            
-            # Renderiza o puzzle por cima se estiver ativo
-            if hasattr(self.current_stage, 'puzzle_active') and self.current_stage.puzzle_active:
+                if not self.paused:
+                    self.paused = True
+                    self.game_music.stop()
+                self.current_stage.draw_only()  # Mantém o último frame do jogo
                 self.current_stage.run_puzzle(delta_time)
+            else:
+                if self.paused:
+                    self.paused = False
+                    self.game_music.play(loops=-1)
+                self.current_stage.run(delta_time)
             
             self.ui.update(delta_time)
             self.ui.draw()
